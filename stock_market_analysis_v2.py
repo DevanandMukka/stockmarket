@@ -63,17 +63,18 @@ if uploaded_file is not None:
         elif next_day.weekday() == 6:  # Sunday
             next_day += timedelta(days=1)
 
-        # --- Style the table ---
-        def color_metrics(val, metric_name):
-            if "R" in metric_name:
+        # --- Style the table correctly ---
+        def color_metrics(val, metric):
+            if "R" in metric:
                 return 'color: red; font-weight: bold;'
-            elif "S" in metric_name:
+            elif "S" in metric:
                 return 'color: green; font-weight: bold;'
             else:  # Pivot / CPR
                 return 'color: black; font-weight: bold;'
 
+        # Apply color per column (correct way)
         styled_df = result_df.style.format({"Value": "{:.2f}"})\
-            .apply(lambda x: [color_metrics(v, m) for v, m in zip(x["Value"], x["Metric"])], axis=1)\
+            .apply(lambda col: [color_metrics(v, m) for v, m in zip(result_df["Value"], result_df["Metric"])], axis=0)\
             .set_properties(**{"font-size": "16px", "text-align": "center"})\
             .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
