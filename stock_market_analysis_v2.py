@@ -79,7 +79,8 @@ if uploaded_file is not None:
             .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
         # --- Display ---
-        st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')}")
+        st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')} (This is next day after the last row in excel)")
         st.dataframe(styled_df, use_container_width=True)
+
 
 
