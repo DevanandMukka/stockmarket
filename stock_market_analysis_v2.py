@@ -48,10 +48,10 @@ if uploaded_file is not None:
 
         # Create DataFrame for display
         data = {
-            "Metric": ["Pivot", "CPR - Top Central", "CPR - Bottom Central", 
-                       "S1", "S2", "S3", "S4", "S5", 
-                       "R1", "R2", "R3", "R4", "R5"],
-            "Value": [pivot, tc, bc, s1, s2, s3, s4, s5, r1, r2, r3, r4, r5]
+            "Metric": ["R5", "R4", "R3", "R2", "R1", 
+		               "CPR - Top Central" , "Pivot", "CPR - Bottom Central", 
+                       "S1", "S2", "S3", "S4", "S5"],
+            "Value": [r5, r4, r3, r2, r1, tc, pivot, bc, s1, s2, s3, s4, s5]
         }
         result_df = pd.DataFrame(data)
 
@@ -116,3 +116,4 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
