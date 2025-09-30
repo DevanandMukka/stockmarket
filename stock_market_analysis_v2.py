@@ -56,8 +56,6 @@ if uploaded_file is not None:
         result_df = pd.DataFrame(data)
 
         # Display results
-
-				# --- Calculate the upcoming trading day (weekday) ---
 		last_date = df["Date"].iloc[-1]
 		
 		# Start with the next day
@@ -139,6 +137,7 @@ if uploaded_file is not None:
         # )
 
         # st.plotly_chart(fig, use_container_width=True)
+
 
 
 
