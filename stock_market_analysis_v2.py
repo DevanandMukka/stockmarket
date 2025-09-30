@@ -56,8 +56,31 @@ if uploaded_file is not None:
         result_df = pd.DataFrame(data)
 
         # Display results
-        st.subheader("Upcoming Day Levels (Next Day after Last Row in File)")
-        st.table(result_df)
+
+				# --- Calculate the upcoming trading day (weekday) ---
+		last_date = df["Date"].iloc[-1]
+		
+		# Start with the next day
+		next_day = last_date + timedelta(days=1)
+		
+		# Skip weekends
+		if next_day.weekday() == 5:  # Saturday
+		    next_day += timedelta(days=2)
+		elif next_day.weekday() == 6:  # Sunday
+		    next_day += timedelta(days=1)
+		
+		# --- Style the table ---
+		styled_df = result_df.style.format({"Value": "{:.2f}"})\
+		    .background_gradient(subset=["Value"], cmap="YlGnBu")\
+		    .set_properties(**{"font-size": "16px", "text-align": "center"})\
+		    .set_table_styles([
+		        {"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}
+		    ])
+		st.subheader("Upcoming Day Levels (Next Day after Last Row in File)")
+		st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')}")
+		st.dataframe(styled_df, use_container_width=True)
+        
+        # st.table(result_df)
 
         # ---- Download Buttons ----
         # st.subheader("Download Results")
@@ -116,6 +139,7 @@ if uploaded_file is not None:
         # )
 
         # st.plotly_chart(fig, use_container_width=True)
+
 
 
 
