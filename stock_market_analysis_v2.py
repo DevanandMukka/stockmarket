@@ -67,7 +67,7 @@ if uploaded_file is not None:
         def color_metrics(val, metric):
             if "R" in metric:
                 return 'color: red; font-weight: bold;'
-            elif "S" in metric:
+            elif "S" in metric or metric == "CPR - Bottom Central":
                 return 'color: green; font-weight: bold;'
             else:  # Pivot / CPR
                 return 'color: black; font-weight: bold;'
@@ -81,3 +81,4 @@ if uploaded_file is not None:
         # --- Display ---
         st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')}")
         st.dataframe(styled_df, use_container_width=True)
+
