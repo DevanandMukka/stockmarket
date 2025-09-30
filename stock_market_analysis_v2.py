@@ -73,7 +73,7 @@ if uploaded_file is not None:
 
         # Excel download
         output = BytesIO()
-        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
             result_df.to_excel(writer, sheet_name="Pivot_Levels", index=False)
         excel_data = output.getvalue()
 
@@ -116,4 +116,5 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
 
