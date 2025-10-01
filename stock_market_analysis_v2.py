@@ -133,18 +133,18 @@ if uploaded_file is not None:
             fillcolor="lightpink", opacity=0.2, line=dict(width=0), layer="below"
         )
 
-        # CPR label annotation
-        fig.add_annotation(
-            x=next_day + pd.Timedelta(hours=12),
-            y=(bc + tc) / 2,
-            text="<b>CPR</b>",
-            showarrow=False,
-            font=dict(color="black", size=14, family="Arial"),
-            align="center",
-            bgcolor="rgba(255, 192, 203, 0.5)",
-            bordercolor="black",
-            borderwidth=1
-        )
+        # # CPR label annotation
+        # fig.add_annotation(
+        #     x=next_day + pd.Timedelta(hours=12),
+        #     y=(bc + tc) / 2,
+        #     text="<b>CPR</b>",
+        #     showarrow=False,
+        #     font=dict(color="black", size=14, family="Arial"),
+        #     align="center",
+        #     bgcolor="rgba(255, 192, 203, 0.5)",
+        #     bordercolor="black",
+        #     borderwidth=1
+        # )
 
         # Layout
         fig.update_layout(
@@ -158,4 +158,5 @@ if uploaded_file is not None:
 
         # Show chart
         st.plotly_chart(fig, use_container_width=True)
+
 
