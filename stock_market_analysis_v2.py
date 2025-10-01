@@ -93,7 +93,7 @@ if uploaded_file is not None:
         # Candlestick chart
         fig.add_trace(go.Candlestick(
             x=df_tail["Date"],
-            open=df_tail["Close"],   # ⚠ Replace with df_tail["Open"] if available in your data
+            open=df_tail["Close"],   # ⚠ Replace with df_tail["Open"] if available
             high=df_tail["High"],
             low=df_tail["Low"],
             close=df_tail["Close"],
@@ -115,34 +115,60 @@ if uploaded_file is not None:
             layer="below"
         )
 
-        # Pivot line
-        fig.add_shape(
-            type="line",
-            x0=next_day, x1=next_day + pd.Timedelta(days=1),
-            y0=pivot, y1=pivot,
-            line=dict(color="black", width=2, dash="solid"),
-            layer="above"
+        # CPR hover info
+        fig.add_trace(go.Scatter(
+            x=[next_day + pd.Timedelta(hours=12)],
+            y=[(bc + tc) / 2],
+            mode="markers",
+            marker=dict(size=20, color="lightpink", opacity=0),
+            hovertemplate=(
+                f"<b>CPR Zone ({next_day.strftime('%d-%b-%Y')})</b><br>"
+                f"Top Central: {tc:.2f}<br>"
+                f"Pivot: {pivot:.2f}<br>"
+                f"Bottom Central: {bc:.2f}<extra></extra>"
+            )
+        ))
+
+        # Always-visible CPR label
+        fig.add_annotation(
+            x=next_day + pd.Timedelta(hours=12),
+            y=(bc + tc) / 2,
+            text="CPR",
+            showarrow=False,
+            font=dict(color="black", size=14, family="Arial", bold=True),
+            align="center",
+            bgcolor="rgba(255, 192, 203, 0.5)",
+            bordercolor="black",
+            borderwidth=1
         )
+
+        # Function to add level lines with hover info
+        def add_level_line(fig, x0, x1, y, label, color, dash="dash"):
+            fig.add_shape(
+                type="line",
+                x0=x0, x1=x1,
+                y0=y, y1=y,
+                line=dict(color=color, dash=dash),
+                layer="above"
+            )
+            fig.add_trace(go.Scatter(
+                x=[(x0 + (x1 - x0)/2)],
+                y=[y],
+                mode="markers",
+                marker=dict(size=1, color=color, opacity=0),
+                hovertemplate=f"{label}: {y:.2f}<extra></extra>"
+            ))
+
+        # Add Pivot
+        add_level_line(fig, next_day, next_day + pd.Timedelta(days=1), pivot, "Pivot", "black", dash="solid")
 
         # Supports
         for i, s in enumerate([s1, s2, s3, s4, s5], start=1):
-            fig.add_shape(
-                type="line",
-                x0=next_day, x1=next_day + pd.Timedelta(days=1),
-                y0=s, y1=s,
-                line=dict(color="green", dash="dash"),
-                layer="above"
-            )
+            add_level_line(fig, next_day, next_day + pd.Timedelta(days=1), s, f"S{i}", "green")
 
         # Resistances
         for i, r in enumerate([r1, r2, r3, r4, r5], start=1):
-            fig.add_shape(
-                type="line",
-                x0=next_day, x1=next_day + pd.Timedelta(days=1),
-                y0=r, y1=r,
-                line=dict(color="red", dash="dash"),
-                layer="above"
-            )
+            add_level_line(fig, next_day, next_day + pd.Timedelta(days=1), r, f"R{i}", "red")
 
         # Layout updates
         fig.update_layout(
