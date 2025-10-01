@@ -50,8 +50,8 @@ if uploaded_file is not None:
 
         # Create DataFrame
         data = {
-            "Metric": ["R5", "R4", "R3", "R2", "R1", 
-                       "CPR - Top Central", "Pivot", "CPR - Bottom Central", 
+            "Metric": ["R5", "R4", "R3", "R2", "R1",
+                       "CPR - Top Central", "Pivot", "CPR - Bottom Central",
                        "S1", "S2", "S3", "S4", "S5"],
             "Value": [r5, r4, r3, r2, r1, tc, pivot, bc, s1, s2, s3, s4, s5]
         }
@@ -79,7 +79,7 @@ if uploaded_file is not None:
             .set_properties(**{"font-size": "16px", "text-align": "center"})\
             .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
-        # --- Display ---
+        # --- Display table ---
         st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')} (Next trading day)")
         st.dataframe(styled_df, use_container_width=True)
 
@@ -93,7 +93,7 @@ if uploaded_file is not None:
         # Candlestick
         fig.add_trace(go.Candlestick(
             x=df_tail["Date"],
-            open=df_tail["Close"],   # ⚠ Replace with df_tail["Open"] if available
+            open=df_tail["Close"],  # ⚠ Replace with df_tail["Open"] if available
             high=df_tail["High"],
             low=df_tail["Low"],
             close=df_tail["Close"],
@@ -102,41 +102,38 @@ if uploaded_file is not None:
             decreasing_line_color="red"
         ))
 
-        # CPR rectangle (for next day only)
+        # Next day levels as scatter traces (with hover labels)
+        levels = {
+            "CPR Top": tc,
+            "Pivot": pivot,
+            "CPR Bottom": bc,
+            "S1": s1, "S2": s2, "S3": s3, "S4": s4, "S5": s5,
+            "R1": r1, "R2": r2, "R3": r3, "R4": r4, "R5": r5
+        }
+
+        for name, value in levels.items():
+            fig.add_trace(go.Scatter(
+                x=[next_day, next_day + pd.Timedelta(days=1)],
+                y=[value, value],
+                mode='lines',
+                name=name,
+                line=dict(
+                    color="green" if "S" in name or "Bottom" in name else "red" if "R" in name or "Top" in name else "black",
+                    dash="dash" if "S" in name or "R" in name else "solid",
+                    width=2
+                ),
+                hovertemplate=f"{name}: %{y:.2f}<extra></extra>"
+            ))
+
+        # CPR shaded rectangle (optional, still visual)
         fig.add_shape(
             type="rect",
             x0=next_day, x1=next_day + pd.Timedelta(days=1),
             y0=bc, y1=tc,
-            fillcolor="lightpink", opacity=0.4, line=dict(width=0), layer="below"
+            fillcolor="lightpink", opacity=0.2, line=dict(width=0), layer="below"
         )
 
-        # Pivot line
-        fig.add_shape(
-            type="line",
-            x0=next_day, x1=next_day + pd.Timedelta(days=1),
-            y0=pivot, y1=pivot,
-            line=dict(color="black", width=2)
-        )
-
-        # Supports
-        for i, s in enumerate([s1, s2, s3, s4, s5], start=1):
-            fig.add_shape(
-                type="line",
-                x0=next_day, x1=next_day + pd.Timedelta(days=1),
-                y0=s, y1=s,
-                line=dict(color="green", dash="dash")
-            )
-
-        # Resistances
-        for i, r in enumerate([r1, r2, r3, r4, r5], start=1):
-            fig.add_shape(
-                type="line",
-                x0=next_day, x1=next_day + pd.Timedelta(days=1),
-                y0=r, y1=r,
-                line=dict(color="red", dash="dash")
-            )
-
-        # CPR Label
+        # CPR label annotation
         fig.add_annotation(
             x=next_day + pd.Timedelta(hours=12),
             y=(bc + tc) / 2,
