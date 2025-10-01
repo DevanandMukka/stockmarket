@@ -122,7 +122,7 @@ if uploaded_file is not None:
                     dash="dash" if "S" in name or "R" in name else "solid",
                     width=2
                 ),
-                hovertemplate=f"{name}: %{y:.2f}<extra></extra>"
+                hovertemplate=f"{name}: %{{y:.2f}}<extra></extra>"
             ))
 
         # CPR shaded rectangle (optional, still visual)
@@ -158,3 +158,4 @@ if uploaded_file is not None:
 
         # Show chart
         st.plotly_chart(fig, use_container_width=True)
+
