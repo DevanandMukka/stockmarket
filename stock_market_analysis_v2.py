@@ -5,7 +5,7 @@ from datetime import timedelta
 import plotly.graph_objects as go
 
 # --- Title with formatting ---
-st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>Sunil's CPR Calculator</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR Calculator</h1>", unsafe_allow_html=True)
 
 # File uploader
 uploaded_file = st.file_uploader("Upload Excel File with Stock Data (Date, High, Low, Close)", type=["xlsx", "xls"])
@@ -65,13 +65,13 @@ if uploaded_file is not None:
         elif next_day.weekday() == 6:  # Sunday
             next_day += timedelta(days=1)
 
-        # --- Style the table ---
+        # --- Style the table correctly ---
         def color_metrics(val, metric):
             if "S" in metric or metric == "CPR - Bottom Central":
                 return 'color: green; font-weight: bold;'
             elif "R" in metric:
                 return 'color: red; font-weight: bold;'
-            else:  # Pivot / CPR top
+            else:  # Pivot / CPR
                 return 'color: black; font-weight: bold;'
 
         styled_df = result_df.style.format({"Value": "{:.2f}"})\
@@ -79,18 +79,18 @@ if uploaded_file is not None:
             .set_properties(**{"font-size": "16px", "text-align": "center"})\
             .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
-        # --- Display table ---
-        st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')} (Next Day after last row in Excel)")
+        # --- Display ---
+        st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')} (Next trading day)")
         st.dataframe(styled_df, use_container_width=True)
 
-        # --- Add Candlestick Chart with CPR for upcoming day ---
+        # --- Chart ---
         df_tail = df.tail(30).copy()
         next_row = pd.DataFrame({"Date": [next_day], "High": [np.nan], "Low": [np.nan], "Close": [np.nan]})
         df_tail = pd.concat([df_tail, next_row], ignore_index=True)
 
         fig = go.Figure()
 
-        # Candlestick chart
+        # Candlestick
         fig.add_trace(go.Candlestick(
             x=df_tail["Date"],
             open=df_tail["Close"],   # ⚠ Replace with df_tail["Open"] if available
@@ -102,75 +102,54 @@ if uploaded_file is not None:
             decreasing_line_color="red"
         ))
 
-        # CPR rectangle for upcoming day
+        # CPR rectangle (for next day only)
         fig.add_shape(
             type="rect",
-            x0=next_day,
-            x1=next_day + pd.Timedelta(days=1),
-            y0=bc,
-            y1=tc,
-            fillcolor="lightpink",
-            opacity=0.4,
-            line=dict(width=0),
-            layer="below"
+            x0=next_day, x1=next_day + pd.Timedelta(days=1),
+            y0=bc, y1=tc,
+            fillcolor="lightpink", opacity=0.4, line=dict(width=0), layer="below"
         )
 
-        # CPR hover info
-        fig.add_trace(go.Scatter(
-            x=[next_day + pd.Timedelta(hours=12)],
-            y=[(bc + tc) / 2],
-            mode="markers",
-            marker=dict(size=20, color="lightpink", opacity=0),
-            hovertemplate=(
-                f"<b>CPR Zone ({next_day.strftime('%d-%b-%Y')})</b><br>"
-                f"Top Central: {tc:.2f}<br>"
-                f"Pivot: {pivot:.2f}<br>"
-                f"Bottom Central: {bc:.2f}<extra></extra>"
-            )
-        ))
+        # Pivot line
+        fig.add_shape(
+            type="line",
+            x0=next_day, x1=next_day + pd.Timedelta(days=1),
+            y0=pivot, y1=pivot,
+            line=dict(color="black", width=2)
+        )
 
-        # Always-visible CPR label
+        # Supports
+        for i, s in enumerate([s1, s2, s3, s4, s5], start=1):
+            fig.add_shape(
+                type="line",
+                x0=next_day, x1=next_day + pd.Timedelta(days=1),
+                y0=s, y1=s,
+                line=dict(color="green", dash="dash")
+            )
+
+        # Resistances
+        for i, r in enumerate([r1, r2, r3, r4, r5], start=1):
+            fig.add_shape(
+                type="line",
+                x0=next_day, x1=next_day + pd.Timedelta(days=1),
+                y0=r, y1=r,
+                line=dict(color="red", dash="dash")
+            )
+
+        # CPR Label
         fig.add_annotation(
             x=next_day + pd.Timedelta(hours=12),
             y=(bc + tc) / 2,
-            text="CPR",
+            text="<b>CPR</b>",
             showarrow=False,
-            font=dict(color="black", size=14, family="Arial", bold=True),
+            font=dict(color="black", size=14, family="Arial"),
             align="center",
             bgcolor="rgba(255, 192, 203, 0.5)",
             bordercolor="black",
             borderwidth=1
         )
 
-        # Function to add level lines with hover info
-        def add_level_line(fig, x0, x1, y, label, color, dash="dash"):
-            fig.add_shape(
-                type="line",
-                x0=x0, x1=x1,
-                y0=y, y1=y,
-                line=dict(color=color, dash=dash),
-                layer="above"
-            )
-            fig.add_trace(go.Scatter(
-                x=[(x0 + (x1 - x0)/2)],
-                y=[y],
-                mode="markers",
-                marker=dict(size=1, color=color, opacity=0),
-                hovertemplate=f"{label}: {y:.2f}<extra></extra>"
-            ))
-
-        # Add Pivot
-        add_level_line(fig, next_day, next_day + pd.Timedelta(days=1), pivot, "Pivot", "black", dash="solid")
-
-        # Supports
-        for i, s in enumerate([s1, s2, s3, s4, s5], start=1):
-            add_level_line(fig, next_day, next_day + pd.Timedelta(days=1), s, f"S{i}", "green")
-
-        # Resistances
-        for i, r in enumerate([r1, r2, r3, r4, r5], start=1):
-            add_level_line(fig, next_day, next_day + pd.Timedelta(days=1), r, f"R{i}", "red")
-
-        # Layout updates
+        # Layout
         fig.update_layout(
             title=f"Upcoming Day CPR & Levels ({next_day.strftime('%A, %d-%b-%Y')})",
             xaxis_title="Date",
