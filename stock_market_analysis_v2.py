@@ -36,10 +36,9 @@ if uploaded_file is not None:
         bc = (high + low) / 2
         tc = pivot + (pivot - bc)
 
-        # Check whether BC is greater than TC, if so reverse the formulas
-        if bc > tc :
-            tc = (high + low) / 2
-            bc = pivot + (pivot - tc)
+        # Ensure correct TC/BC order
+        if bc > tc:
+            tc, bc = bc, tc
 
         # Support and Resistance
         r1 = (2 * pivot) - low
@@ -66,7 +65,6 @@ if uploaded_file is not None:
         last_date = df["Date"].iloc[-1]
         next_day = last_date + timedelta(days=1)
 
-        
         if next_day.weekday() == 5:  # Saturday
             next_day += timedelta(days=2)
         elif next_day.weekday() == 6:  # Sunday
@@ -78,84 +76,75 @@ if uploaded_file is not None:
                 return 'color: green; font-weight: bold;'
             elif "R" in metric:
                 return 'color: red; font-weight: bold;'
-            else:  # Pivot / CPR
+            else:
                 return 'color: black; font-weight: bold;'
 
-        styled_df = result_df.style.format({"Value": "{:.2f}"})\
-            .apply(lambda col: [color_metrics(v, m) for v, m in zip(result_df["Value"], result_df["Metric"])], axis=0)\
-            .set_properties(**{"font-size": "16px", "text-align": "center"})\
+        styled_df = result_df.style.format({"Value": "{:.2f}"}) \
+            .apply(lambda col: [color_metrics(v, m) for v, m in zip(result_df["Value"], result_df["Metric"])], axis=0) \
+            .set_properties(**{"font-size": "16px", "text-align": "center"}) \
             .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
         # --- Display table ---
         st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')} (Next trading day)")
         st.dataframe(styled_df, use_container_width=True)
 
-        # --- Chart ---
-        df_tail = df.tail(30).copy()
+        # --- Chart (CPR lines only) ---
+        df_tail = df.tail(10).copy()  # last 10 days
         next_row = pd.DataFrame({"Date": [next_day], "High": [np.nan], "Low": [np.nan], "Close": [np.nan]})
         df_tail = pd.concat([df_tail, next_row], ignore_index=True)
 
+        # Compute CPR levels for each of the last 10 days
+        df_tail["Pivot"] = (df_tail["High"] + df_tail["Low"] + df_tail["Close"]) / 3
+        df_tail["BC"] = (df_tail["High"] + df_tail["Low"]) / 2
+        df_tail["TC"] = df_tail["Pivot"] + (df_tail["Pivot"] - df_tail["BC"])
+
+        # Ensure TC > BC
+        df_tail.loc[df_tail["BC"] > df_tail["TC"], ["TC", "BC"]] = df_tail.loc[df_tail["BC"] > df_tail["TC"], ["BC", "TC"]].values
+
+        # Add next day’s computed levels
+        df_tail.loc[df_tail.index[-1], ["Pivot", "BC", "TC"]] = [pivot, bc, tc]
+
+        # Plot the CPR levels
         fig = go.Figure()
 
-        # Candlestick
-        fig.add_trace(go.Candlestick(
+        fig.add_trace(go.Scatter(
             x=df_tail["Date"],
-            open=df_tail["Close"],  # ⚠ Replace with df_tail["Open"] if available
-            high=df_tail["High"],
-            low=df_tail["Low"],
-            close=df_tail["Close"],
-            name="Price",
-            increasing_line_color="green",
-            decreasing_line_color="red"
+            y=df_tail["TC"],
+            mode="lines+markers",
+            name="Top Central (TC)",
+            line=dict(color="red", width=2),
+            hovertemplate="TC: %{y:.2f}<extra></extra>"
         ))
 
-        # Next day levels as scatter traces (with hover labels)
-        levels = {
-            "CPR Top": tc,
-            "Pivot": pivot,
-            "CPR Bottom": bc,
-            "S1": s1, "S2": s2, "S3": s3, "S4": s4, "S5": s5,
-            "R1": r1, "R2": r2, "R3": r3, "R4": r4, "R5": r5
-        }
+        fig.add_trace(go.Scatter(
+            x=df_tail["Date"],
+            y=df_tail["Pivot"],
+            mode="lines+markers",
+            name="Central Pivot (P)",
+            line=dict(color="black", width=2, dash="dot"),
+            hovertemplate="Pivot: %{y:.2f}<extra></extra>"
+        ))
 
-        for name, value in levels.items():
-            fig.add_trace(go.Scatter(
-                x=[next_day, next_day + pd.Timedelta(days=1)],
-                y=[value, value],
-                mode='lines',
-                name=name,
-                line=dict(
-                    color="green" if "S" in name or "Bottom" in name else "red" if "R" in name or "Top" in name else "black",
-                    dash="dash" if "S" in name or "R" in name else "solid",
-                    width=2
-                ),
-                hovertemplate=f"{name}: %{{y:.2f}}<extra></extra>"
-            ))
+        fig.add_trace(go.Scatter(
+            x=df_tail["Date"],
+            y=df_tail["BC"],
+            mode="lines+markers",
+            name="Bottom Central (BC)",
+            line=dict(color="green", width=2),
+            hovertemplate="BC: %{y:.2f}<extra></extra>"
+        ))
 
-        # CPR shaded rectangle (optional, still visual)
+        # Highlight next day’s CPR area
         fig.add_shape(
             type="rect",
-            x0=next_day, x1=next_day + pd.Timedelta(days=1),
+            x0=next_day - pd.Timedelta(hours=12),
+            x1=next_day + pd.Timedelta(hours=12),
             y0=bc, y1=tc,
-            fillcolor="lightpink", opacity=0.2, line=dict(width=0), layer="below"
+            fillcolor="lightpink", opacity=0.2, line=dict(width=0)
         )
 
-        # # CPR label annotation
-        # fig.add_annotation(
-        #     x=next_day + pd.Timedelta(hours=12),
-        #     y=(bc + tc) / 2,
-        #     text="<b>CPR</b>",
-        #     showarrow=False,
-        #     font=dict(color="black", size=14, family="Arial"),
-        #     align="center",
-        #     bgcolor="rgba(255, 192, 203, 0.5)",
-        #     bordercolor="black",
-        #     borderwidth=1
-        # )
-
-        # Layout
         fig.update_layout(
-            title=f"Upcoming Day CPR & Levels ({next_day.strftime('%A, %d-%b-%Y')})",
+            title=f"CPR Levels (Last 10 Days + {next_day.strftime('%d-%b-%Y')})",
             xaxis_title="Date",
             yaxis_title="Price",
             xaxis_rangeslider_visible=False,
@@ -163,8 +152,4 @@ if uploaded_file is not None:
             template="plotly_white"
         )
 
-        # Show chart
         st.plotly_chart(fig, use_container_width=True)
-
-
-
