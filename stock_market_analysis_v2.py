@@ -23,38 +23,29 @@ if uploaded_file is not None:
         df = df.sort_values("Date")
         df["Date"] = pd.to_datetime(df["Date"])
 
-        # --- Calculate current day's CPR ---
+        # --- Calculate current day's CPR (for NEXT DAY prediction) ---
         last_row = df.iloc[-1]
         high, low, close = last_row["High"], last_row["Low"], last_row["Close"]
 
-        pivot = (high + low + close) / 3
-        bc = (high + low) / 2
-        tc = pivot + (pivot - bc)
-        if bc > tc:
-            tc, bc = bc, tc
+        pivot_next = (high + low + close) / 3
+        bc_next = (high + low) / 2
+        tc_next = pivot_next + (pivot_next - bc_next)
+        if bc_next > tc_next:
+            tc_next, bc_next = bc_next, tc_next
 
-        # --- Calculate supports & resistances ---
-        r1 = (2 * pivot) - low
-        s1 = (2 * pivot) - high
-        r2 = pivot + (high - low)
-        s2 = pivot - (high - low)
+        # --- Supports & Resistances ---
+        r1 = (2 * pivot_next) - low
+        s1 = (2 * pivot_next) - high
+        r2 = pivot_next + (high - low)
+        s2 = pivot_next - (high - low)
         r3 = r1 + (high - low)
-        s3 = s1 + (high - pivot)
+        s3 = s1 + (high - pivot_next)
         r4 = r3 + (r2 - r1)
         s4 = s3 - (s1 - s2)
         r5 = r4 + (r2 - r1)
         s5 = s4 - (s1 - s2)
 
-        # --- Create DataFrame for display ---
-        data = {
-            "Metric": ["R5", "R4", "R3", "R2", "R1",
-                       "CPR - Top Central", "Pivot", "CPR - Bottom Central",
-                       "S1", "S2", "S3", "S4", "S5"],
-            "Value": [r5, r4, r3, r2, r1, tc, pivot, bc, s1, s2, s3, s4, s5]
-        }
-        result_df = pd.DataFrame(data)
-
-        # --- Find next trading day ---
+        # --- Next trading day ---
         last_date = df["Date"].iloc[-1]
         next_day = last_date + timedelta(days=1)
         if next_day.weekday() == 5:  # Saturday
@@ -62,7 +53,16 @@ if uploaded_file is not None:
         elif next_day.weekday() == 6:  # Sunday
             next_day += timedelta(days=1)
 
-        # --- Style table ---
+        # --- Table ---
+        data = {
+            "Metric": ["R5", "R4", "R3", "R2", "R1",
+                       "CPR - Top Central", "Pivot", "CPR - Bottom Central",
+                       "S1", "S2", "S3", "S4", "S5"],
+            "Value": [r5, r4, r3, r2, r1, tc_next, pivot_next, bc_next, s1, s2, s3, s4, s5]
+        }
+        result_df = pd.DataFrame(data)
+
+        # --- Style the table ---
         def color_metrics(val, metric):
             if "S" in metric or metric == "CPR - Bottom Central":
                 return 'color: green; font-weight: bold;'
@@ -76,35 +76,35 @@ if uploaded_file is not None:
             .set_properties(**{"font-size": "16px", "text-align": "center"}) \
             .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
-        # --- Display CPR table ---
         st.subheader(f"Stock Levels for {next_day.strftime('%A, %d-%b-%Y')} (Next trading day)")
         st.dataframe(styled_df, use_container_width=True)
 
-        # --- Chart: Horizontal CPR lines for last 10 days + next day ---
+        # --- CPR Chart (10 days + next day) ---
         df_tail = df.tail(10).copy()
-        next_row = pd.DataFrame({"Date": [next_day], "High": [np.nan], "Low": [np.nan], "Close": [np.nan]})
-        df_tail = pd.concat([df_tail, next_row], ignore_index=True)
 
-        # Compute CPR levels for each day
+        # Compute CPR for each day
         df_tail["Pivot"] = (df_tail["High"] + df_tail["Low"] + df_tail["Close"]) / 3
         df_tail["BC"] = (df_tail["High"] + df_tail["Low"]) / 2
         df_tail["TC"] = df_tail["Pivot"] + (df_tail["Pivot"] - df_tail["BC"])
         df_tail.loc[df_tail["BC"] > df_tail["TC"], ["TC", "BC"]] = df_tail.loc[df_tail["BC"] > df_tail["TC"], ["BC", "TC"]].values
 
-        # Add next day's calculated values
-        df_tail.loc[df_tail.index[-1], ["Pivot", "BC", "TC"]] = [pivot, bc, tc]
+        # Add NEXT DAY as a new row with its computed CPR
+        next_row = pd.DataFrame({
+            "Date": [next_day],
+            "High": [np.nan], "Low": [np.nan], "Close": [np.nan],
+            "Pivot": [pivot_next], "BC": [bc_next], "TC": [tc_next]
+        })
+        df_tail = pd.concat([df_tail, next_row], ignore_index=True)
 
         # --- Plot ---
         fig = go.Figure()
 
-        # Horizontal CPR lines per date
+        # Draw 3 horizontal lines per day (±16h width)
         for i, row in df_tail.iterrows():
             date = row["Date"]
-            # Make each day's CPR lines visually wider (±16 hours)
             x0 = date - pd.Timedelta(hours=16)
             x1 = date + pd.Timedelta(hours=16)
 
-            # TC line
             fig.add_trace(go.Scatter(
                 x=[x0, x1],
                 y=[row["TC"], row["TC"]],
@@ -114,7 +114,6 @@ if uploaded_file is not None:
                 hovertemplate=f"Date: {date.strftime('%d-%b-%Y')}<br>TC: %{{y:.2f}}<extra></extra>"
             ))
 
-            # Pivot line
             fig.add_trace(go.Scatter(
                 x=[x0, x1],
                 y=[row["Pivot"], row["Pivot"]],
@@ -124,7 +123,6 @@ if uploaded_file is not None:
                 hovertemplate=f"Date: {date.strftime('%d-%b-%Y')}<br>Pivot: %{{y:.2f}}<extra></extra>"
             ))
 
-            # BC line
             fig.add_trace(go.Scatter(
                 x=[x0, x1],
                 y=[row["BC"], row["BC"]],
@@ -134,12 +132,12 @@ if uploaded_file is not None:
                 hovertemplate=f"Date: {date.strftime('%d-%b-%Y')}<br>BC: %{{y:.2f}}<extra></extra>"
             ))
 
-        # --- Highlight next day's CPR band ---
+        # Highlight next day's CPR band
         fig.add_shape(
             type="rect",
             x0=next_day - pd.Timedelta(hours=16),
             x1=next_day + pd.Timedelta(hours=16),
-            y0=bc, y1=tc,
+            y0=bc_next, y1=tc_next,
             fillcolor="lightpink", opacity=0.25, line=dict(width=0)
         )
 
