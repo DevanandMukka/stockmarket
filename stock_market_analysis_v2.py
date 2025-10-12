@@ -36,6 +36,11 @@ if uploaded_file is not None:
         bc = (high + low) / 2
         tc = pivot + (pivot - bc)
 
+        # Check whether BC is greater than TC, if so reverse the formulas
+        if bc > tc :
+            tc = (high + low) / 2
+            bc = pivot + (pivot - tc)
+
         # Support and Resistance
         r1 = (2 * pivot) - low
         s1 = (2 * pivot) - high
@@ -60,6 +65,8 @@ if uploaded_file is not None:
         # --- Next weekday date ---
         last_date = df["Date"].iloc[-1]
         next_day = last_date + timedelta(days=1)
+
+        
         if next_day.weekday() == 5:  # Saturday
             next_day += timedelta(days=2)
         elif next_day.weekday() == 6:  # Sunday
@@ -158,5 +165,6 @@ if uploaded_file is not None:
 
         # Show chart
         st.plotly_chart(fig, use_container_width=True)
+
 
 
