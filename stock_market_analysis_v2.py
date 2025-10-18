@@ -283,22 +283,22 @@ else:
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_tc, next_tc],
         mode="lines", line=dict(color="darkred", width=3, dash="dash"),
-        name="T+1 TC",
-        hovertemplate=f"T+1 TC ({next_date.strftime('%d-%b-%Y')}): {next_tc:.2f}<extra></extra>",
+        name="Next Day TC",
+        hovertemplate=f"Next Day TC ({next_date.strftime('%d-%b-%Y')}): {next_tc:.2f}<extra></extra>",
         showlegend=True
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_pivot, next_pivot],
         mode="lines", line=dict(color="darkblue", width=3, dash="dot"),
-        name="T+1 Pivot",
-        hovertemplate=f"T+1 Pivot ({next_date.strftime('%d-%b-%Y')}): {next_pivot:.2f}<extra></extra>",
+        name="Next Day Pivot",
+        hovertemplate=f"Next Day Pivot ({next_date.strftime('%d-%b-%Y')}): {next_pivot:.2f}<extra></extra>",
         showlegend=True
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_bc, next_bc],
         mode="lines", line=dict(color="darkgreen", width=3, dash="dash"),
-        name="T+1 BC",
-        hovertemplate=f"T+1 BC ({next_date.strftime('%d-%b-%Y')}): {next_bc:.2f}<extra></extra>",
+        name="Next Day BC",
+        hovertemplate=f"Next Day BC ({next_date.strftime('%d-%b-%Y')}): {next_bc:.2f}<extra></extra>",
         showlegend=True
     ))
     
@@ -331,6 +331,7 @@ else:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
