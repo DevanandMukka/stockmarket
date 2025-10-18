@@ -121,7 +121,7 @@ if uploaded_file is not None:
             elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
                 relationship = "Unchanged Value Relationship"
                 sentiment = "Sideways/Breakout"
-                condition_text = f"Current and Previous CPR nearly equal: ΔTC={abs(curr_tc - prev_tc):.2f}, ΔBC={abs(curr_bc - prev_bc):.2f}"
+                condition_text = f"Current and Previous CPR nearly equal: Diff in TC={abs(curr_tc - prev_tc):.2f},  Diff in BC={abs(curr_bc - prev_bc):.2f}"
 
             # 6️⃣ Outside Value Relationship
             elif curr_tc > prev_tc and curr_bc < prev_bc:
@@ -215,3 +215,4 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
