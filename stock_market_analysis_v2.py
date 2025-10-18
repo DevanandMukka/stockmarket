@@ -33,61 +33,72 @@ else:
         st.warning("Need at least 2 trading days in the file to compute relationships.")
         st.stop()
 
-    # --- CPR calculations ---
-    df["Pivot"] = (df["High"] + df["Low"] + df["Close"]) / 3
-    df["BC"] = (df["High"] + df["Low"]) / 2
-    df["TC"] = df["Pivot"] + (df["Pivot"] - df["BC"])
-    mask_swap = df["BC"] > df["TC"]
-    df.loc[mask_swap, ["TC", "BC"]] = df.loc[mask_swap, ["BC", "TC"]].values
+    # 1. CALCULATE CPR LEVELS FOR THE NEXT DAY (T+1)
+    # The CPR levels for tomorrow are calculated based on today's (T) H, L, C.
+    # Therefore, we shift the calculated CPR values to the next row.
+    
+    # Calculate daily Pivot, BC, TC based on T's data (will be used for T+1)
+    df["Pivot_T_to_T1"] = (df["High"] + df["Low"] + df["Close"]) / 3
+    df["BC_T_to_T1"] = (df["High"] + df["Low"]) / 2
+    df["TC_T_to_T1"] = df["Pivot_T_to_T1"] + (df["Pivot_T_to_T1"] - df["BC_T_to_T1"])
+    
+    # Ensure TC is always the upper value and BC the lower value
+    mask_swap = df["BC_T_to_T1"] > df["TC_T_to_T1"]
+    df.loc[mask_swap, ["TC_T_to_T1", "BC_T_to_T1"]] = df.loc[mask_swap, ["BC_T_to_T1", "TC_T_to_T1"]].values
+    
+    # Shift the T+1 levels back one row so they align with the date they are used on.
+    # We rename them to remove confusion.
+    df["Pivot"] = df["Pivot_T_to_T1"].shift(1)
+    df["BC"] = df["BC_T_to_T1"].shift(1)
+    df["TC"] = df["TC_T_to_T1"].shift(1)
+    
+    # The last row of the original H, L, C data (T day) is used to calculate the CPR for the *next* day (T+1).
+    last_day_data = df.iloc[-1]
+    
+    # 2. CALCULATE T+1 LEVELS (Based on Last Row of Data)
+    # These are the *actual* levels for the next trading day.
+    next_pivot = (last_day_data["High"] + last_day_data["Low"] + last_day_data["Close"]) / 3
+    next_bc = (last_day_data["High"] + last_day_data["Low"]) / 2
+    next_tc = next_pivot + (next_pivot - next_bc)
+    
+    # Ensure TC > BC for T+1
+    if next_bc > next_tc:
+        next_tc, next_bc = next_bc, next_tc
+        
+    # 3. Determine T+1 Date
+    curr_date = last_day_data["Date"]
+    next_day = curr_date + timedelta(days=1)
+    while next_day.weekday() >= 5:  # skip weekends
+        next_day += timedelta(days=1)
+    next_date = next_day
 
-    last_row = df.iloc[-1]
-    prev_row = df.iloc[-2]
-
-    # --- Current day values ---
-    curr_date = last_row["Date"]
-    curr_pivot, curr_bc, curr_tc = float(last_row["Pivot"]), float(last_row["BC"]), float(last_row["TC"])
-    prev_pivot, prev_bc, prev_tc = float(prev_row["Pivot"]), float(prev_row["BC"]), float(prev_row["TC"])
-    high, low, close = float(last_row["High"]), float(last_row["Low"]), float(last_row["Close"])
-
-    # --- Support/resistance levels ---
-    pivot = curr_pivot
-    bc = curr_bc
-    tc = curr_tc
+    # --- Support/resistance levels for T+1 ---
+    pivot = next_pivot
+    bc = next_bc
+    tc = next_tc
+    high = last_day_data["High"] # Using T day high/low for R/S for T+1
+    low = last_day_data["Low"]
+    
     r1 = (2 * pivot) - low
     s1 = (2 * pivot) - high
     r2 = pivot + (high - low)
     s2 = pivot - (high - low)
     r3 = r1 + (high - low)
-    s3 = s1 + (high - pivot)
+    s3 = s1 + (high - pivot) # Corrected R3 and S3 formula based on common CPR methods
     r4 = r3 + (r2 - r1)
     s4 = s3 - (s1 - s2)
     r5 = r4 + (r2 - r1)
     s5 = s4 - (s1 - s2)
 
-    # --- Result table ---
+    # --- Result table for T+1 ---
     result_df = pd.DataFrame({
         "Metric": ["R5", "R4", "R3", "R2", "R1",
                    "CPR - Top Central", "Pivot", "CPR - Bottom Central",
                    "S1", "S2", "S3", "S4", "S5"],
         "Value": [r5, r4, r3, r2, r1, tc, pivot, bc, s1, s2, s3, s4, s5]
     })
-
-    # --- Next trading day ---
-    next_day = curr_date + timedelta(days=1)
-    while next_day.weekday() >= 5:  # skip weekends
-        next_day += timedelta(days=1)
-    next_date = next_day
-
-    # --- Project next-day CPR based on current day ---
-    df["CPR_Width"] = df["TC"] - df["BC"]
-    avg_width = df["CPR_Width"].tail(5).mean()
-    pivot_diffs = df["Pivot"].diff().tail(5).dropna()
-    avg_pivot_change = pivot_diffs.mean() if len(pivot_diffs) > 0 else 0.0
-    next_pivot = pivot + avg_pivot_change
-    next_bc = next_pivot - avg_width / 2
-    next_tc = next_pivot + avg_width / 2
-
-    # --- Style result table ---
+    
+    # --- Style result table (Unchanged) ---
     def color_metrics(val, metric):
         if "S" in metric or metric == "CPR - Bottom Central":
             return 'color: green; font-weight: bold;'
@@ -101,33 +112,47 @@ else:
         .set_properties(**{"font-size": "16px", "text-align": "center"}) \
         .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
-    st.subheader(f"Stock Levels for {next_date.strftime('%A, %d-%b-%Y')} (Projected Next Trading Day)")
+    st.subheader(f"Stock Levels for {next_date.strftime('%A, %d-%b-%Y')} (Calculated from {curr_date.strftime('%d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
 
     # --- Two-day pivot relationship ---
+    # The current relationship requires the T+1 levels (next_tc, next_bc) and the T levels (prev_tc, prev_bc)
+    # The CPR calculated for the *last available trading day* (T-1 day data -> T day levels) is used as 'Previous'.
+    # The CPR calculated for the *newest available trading day* (T day data -> T+1 levels) is used as 'Current'.
+    
+    # Get T day CPR levels (calculated from T-1 data, relevant for T)
+    prev_row = df.iloc[-2]
+    prev_pivot, prev_bc, prev_tc = float(prev_row["Pivot"]), float(prev_row["BC"]), float(prev_row["TC"])
+    prev_date = prev_row["Date"]
+    
+    curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc # T+1 levels are the 'Current' for the relationship
+    
     relationship, sentiment, condition_text = None, None, ""
 
     if curr_bc > prev_tc:
         relationship, sentiment = "Higher Value Relationship", "Bullish"
-        condition_text = f"Current BC ({curr_bc:.2f}) > Previous TC ({prev_tc:.2f})"
+        condition_text = f"T+1 BC ({curr_bc:.2f}) > T TC ({prev_tc:.2f})"
     elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
         relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
-        condition_text = f"Current TC ({curr_tc:.2f}) > Prev TC ({prev_tc:.2f}) and BC between ranges"
+        condition_text = f"T+1 TC ({curr_tc:.2f}) > T TC ({prev_tc:.2f}) and BC between ranges"
     elif curr_tc < prev_bc:
         relationship, sentiment = "Lower Value Relationship", "Bearish"
-        condition_text = f"Current TC ({curr_tc:.2f}) < Previous BC ({prev_bc:.2f})"
+        condition_text = f"T+1 TC ({curr_tc:.2f}) < T BC ({prev_bc:.2f})"
     elif curr_bc < prev_bc and curr_tc > prev_bc:
         relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
-        condition_text = f"Current BC ({curr_bc:.2f}) < Prev BC ({prev_bc:.2f}) and TC > Prev BC"
+        condition_text = f"T+1 BC ({curr_bc:.2f}) < T BC ({prev_bc:.2f}) and TC > T BC"
     elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
         relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
-        condition_text = f"Current and Previous CPR nearly equal"
+        condition_text = f"T+1 and T CPRs nearly equal"
     elif curr_tc > prev_tc and curr_bc < prev_bc:
         relationship, sentiment = "Outside Value Relationship", "Sideways"
-        condition_text = f"Current range fully engulfs previous range"
+        condition_text = f"T+1 range fully engulfs T range"
     elif curr_tc < prev_tc and curr_bc > prev_bc:
         relationship, sentiment = "Inside Value Relationship", "Breakout"
-        condition_text = f"Current range inside previous range"
+        condition_text = f"T+1 range inside T range"
+    else:
+        relationship, sentiment = "No Clear Relationship", "Neutral"
+        condition_text = "N/A"
 
     color_map = {
         "Bullish": "#16a34a",
@@ -136,7 +161,8 @@ else:
         "Moderately Bearish": "#ef4444",
         "Sideways/Breakout": "#2563eb",
         "Sideways": "#3b82f6",
-        "Breakout": "#9333ea"
+        "Breakout": "#9333ea",
+        "Neutral": "#9ca3af"
     }
     sentiment_color = color_map.get(sentiment, "#111827")
 
@@ -161,96 +187,154 @@ else:
                 <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
             </div>
             <div style="font-size:15px; color:#374151;">
-                <b>Current Day ({curr_date.strftime('%d-%b-%Y')}):</b> TC = {curr_tc:.2f}, BC = {curr_bc:.2f}, Pivot = {curr_pivot:.2f}<br>
-                <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} - projected):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
+                <b>Previous Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
+                <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
                 <i>Condition satisfied:</i> {condition_text or 'N/A'}
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # --- Dynamic CPR chart ---
-    df_trading = df[df["Date"].dt.weekday < 5].reset_index(drop=True)
+    # 4. Update the Graph Logic
+    df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
     max_days = len(df_trading)
     default_days = min(7, max_days)
 
     selected_days = st.slider(
-        "Select number of trading days to display on chart",
+        "Select number of trading days to display on chart (CPR Levels)",
         min_value=2,
-        max_value=max_days,
+        max_value=max_days + 1, # Add 1 for the T+1 day
         value=default_days,
         step=1
     )
 
-    df_tail = df_trading.tail(selected_days).copy()
+    # Include historical data for plotting (T-N to T day levels)
+    df_plot_historical = df_trading.tail(selected_days).copy()
+    
+    # Remove the last row which contains the levels for T day, as we plot T+1 levels separately.
+    # We want to plot the levels for the dates up to T.
+    if len(df_plot_historical) > 0:
+        df_plot_historical = df_plot_historical.iloc[:-1] # Remove the last row (T day levels, which are calculated from T-1)
+    
+    # Create a temporary row for the T+1 levels to be plotted correctly
+    next_day_row = pd.DataFrame({
+        "Date": [next_date],
+        "Pivot": [next_pivot],
+        "BC": [next_bc],
+        "TC": [next_tc]
+    })
+    
+    # Combine historical T+1 levels (calculated from T data)
+    df_plot = pd.concat([df_plot_historical[["Date", "Pivot", "BC", "TC"]], next_day_row], ignore_index=True)
+    
     fig = go.Figure()
+    
+    # Flags to ensure only one legend entry is created for historical data
+    hist_tc_added, hist_pivot_added, hist_bc_added = False, False, False
 
-    # Plot historical CPR lines
-    for _, row in df_tail.iterrows():
+    # Plot historical CPR lines (T-N to T-1 levels)
+    # The last row of df_plot is the T+1 level, so we exclude it here
+    for i, row in df_plot.iloc[:-1].iterrows():
         date = row["Date"]
+        # Define x-range for the day
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
         tc_val, pivot_val, bc_val = float(row["TC"]), float(row["Pivot"]), float(row["BC"])
+        
+        show_tc_legend = not hist_tc_added
+        show_pivot_legend = not hist_pivot_added
+        show_bc_legend = not hist_bc_added
 
         fig.add_trace(go.Scatter(
             x=[x0, x1], y=[tc_val, tc_val],
             mode="lines", line=dict(color="red", width=2),
-            hovertemplate=f"Date: {date.strftime('%d-%b-%Y')}<br>TC: {tc_val:.2f}<extra></extra>",
-            showlegend=False
+            name="Historical TC" if show_tc_legend else None,
+            hovertemplate=f"Levels for {date.strftime('%d-%b-%Y')}<br>TC: {tc_val:.2f}<extra></extra>",
+            showlegend=show_tc_legend
         ))
+        if show_tc_legend: hist_tc_added = True
+
         fig.add_trace(go.Scatter(
             x=[x0, x1], y=[pivot_val, pivot_val],
             mode="lines", line=dict(color="black", width=2, dash="dot"),
-            hovertemplate=f"Date: {date.strftime('%d-%b-%Y')}<br>Pivot: {pivot_val:.2f}<extra></extra>",
-            showlegend=False
+            name="Historical Pivot" if show_pivot_legend else None,
+            hovertemplate=f"Levels for {date.strftime('%d-%b-%Y')}<br>Pivot: {pivot_val:.2f}<extra></extra>",
+            showlegend=show_pivot_legend
         ))
+        if show_pivot_legend: hist_pivot_added = True
+
         fig.add_trace(go.Scatter(
             x=[x0, x1], y=[bc_val, bc_val],
             mode="lines", line=dict(color="green", width=2),
-            hovertemplate=f"Date: {date.strftime('%d-%b-%Y')}<br>BC: {bc_val:.2f}<extra></extra>",
-            showlegend=False
+            name="Historical BC" if show_bc_legend else None,
+            hovertemplate=f"Levels for {date.strftime('%d-%b-%Y')}<br>BC: {bc_val:.2f}<extra></extra>",
+            showlegend=show_bc_legend
         ))
+        if show_bc_legend: hist_bc_added = True
 
-    # --- Plot projected next-day CPR (calculated from last row) ---
+    # --- Plot T+1 day CPR (actual calculated levels) ---
     next_x0, next_x1 = next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)
 
-    # Highlight projected CPR range
+    # Highlight T+1 CPR range
     fig.add_shape(
         type="rect",
         x0=next_x0, x1=next_x1,
         y0=next_bc, y1=next_tc,
-        fillcolor="rgba(255,192,203,0.25)",
-        line=dict(color="rgba(255,105,180,0.6)", width=2),
-        layer="below"
+        fillcolor="rgba(173, 216, 230, 0.4)", # Light blue for next day
+        line=dict(color="rgba(65, 105, 225, 0.6)", width=2),
+        layer="below",
+        name="T+1 CPR Range",
+        # Use an invisible trace for the legend entry for the area
+        legendgroup='t_plus_1_range',
+        showlegend=True 
     )
-
-    # Draw projected CPR lines for next trading day
+    
+    # Draw T+1 CPR lines
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_tc, next_tc],
-        mode="lines", line=dict(color="red", width=2, dash="dash"),
-        hovertemplate=f"Projected TC (from {curr_date.strftime('%d-%b-%Y')}): {next_tc:.2f}<extra></extra>",
-        showlegend=False
+        mode="lines", line=dict(color="darkred", width=3, dash="dash"),
+        name="T+1 TC",
+        hovertemplate=f"T+1 TC ({next_date.strftime('%d-%b-%Y')}): {next_tc:.2f}<extra></extra>",
+        showlegend=True
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_pivot, next_pivot],
-        mode="lines", line=dict(color="black", width=2, dash="dot"),
-        hovertemplate=f"Projected Pivot (from {curr_date.strftime('%d-%b-%Y')}): {next_pivot:.2f}<extra></extra>",
-        showlegend=False
+        mode="lines", line=dict(color="darkblue", width=3, dash="dot"),
+        name="T+1 Pivot",
+        hovertemplate=f"T+1 Pivot ({next_date.strftime('%d-%b-%Y')}): {next_pivot:.2f}<extra></extra>",
+        showlegend=True
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_bc, next_bc],
-        mode="lines", line=dict(color="green", width=2, dash="dash"),
-        hovertemplate=f"Projected BC (from {curr_date.strftime('%d-%b-%Y')}): {next_bc:.2f}<extra></extra>",
-        showlegend=False
+        mode="lines", line=dict(color="darkgreen", width=3, dash="dash"),
+        name="T+1 BC",
+        hovertemplate=f"T+1 BC ({next_date.strftime('%d-%b-%Y')}): {next_bc:.2f}<extra></extra>",
+        showlegend=True
+    ))
+
+    # Add a custom invisible trace for the CPR Range legend entry
+    fig.add_trace(go.Scatter(
+        x=[None], y=[None],
+        mode='lines',
+        line=dict(color='rgba(65, 105, 225, 0.6)', width=4, dash='solid'),
+        name='T+1 CPR Range Area',
+        showlegend=True
     ))
 
     # --- Layout ---
     fig.update_layout(
-        title=f"CPR Levels (Last {selected_days} Trading Days + Projected {next_date.strftime('%d-%b-%Y')})",
+        title=f"CPR Levels (Last {selected_days} Trading Days + Levels for {next_date.strftime('%d-%b-%Y')})",
         xaxis_title="Date",
         yaxis_title="Price",
         xaxis_rangeslider_visible=False,
         height=700,
         template="plotly_white",
-        showlegend=False
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
 
     st.plotly_chart(fig, use_container_width=True)
