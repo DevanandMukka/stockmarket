@@ -23,7 +23,7 @@ if uploaded_file is not None:
         df = df.sort_values("Date")
         df["Date"] = pd.to_datetime(df["Date"])
 
-        # --- Calculate CPR values for all days ---
+        # --- Calculate CPR values for all trading days ---
         df["Pivot"] = (df["High"] + df["Low"] + df["Close"]) / 3
         df["BC"] = (df["High"] + df["Low"]) / 2
         df["TC"] = df["Pivot"] + (df["Pivot"] - df["BC"])
@@ -57,13 +57,17 @@ if uploaded_file is not None:
         }
         result_df = pd.DataFrame(data)
 
-        # --- Next trading day ---
+        # --- Next Trading Day Calculation ---
         last_date = df["Date"].iloc[-1]
         next_day = last_date + timedelta(days=1)
-        if next_day.weekday() == 5:
-            next_day += timedelta(days=2)
-        elif next_day.weekday() == 6:
+        while next_day.weekday() >= 5:  # Skip weekends
             next_day += timedelta(days=1)
+
+        # Project next day CPR width based on recent average
+        df["CPR_Width"] = df["TC"] - df["BC"]
+        avg_width = df["CPR_Width"].tail(5).mean()
+        next_bc = pivot - avg_width / 2
+        next_tc = pivot + avg_width / 2
 
         # --- Style table ---
         def color_metrics(val, metric):
@@ -86,8 +90,8 @@ if uploaded_file is not None:
         if prev_row is not None:
             prev_tc, prev_bc = prev_row["TC"], prev_row["BC"]
             curr_tc, curr_bc = last_row["TC"], last_row["BC"]
-            curr_date = prev_row["Date"].strftime("%d-%b-%Y")  # current (latest available)
-            next_date = next_day.strftime("%d-%b-%Y")          # projected next trading day
+            curr_date = last_row["Date"].strftime("%d-%b-%Y")
+            next_date = next_day.strftime("%d-%b-%Y")
 
             relationship = None
             sentiment = None
@@ -137,17 +141,17 @@ if uploaded_file is not None:
 
             # --- Choose sentiment color ---
             color_map = {
-                "Bullish": "#16a34a",           # green
+                "Bullish": "#16a34a",
                 "Moderately Bullish": "#22c55e",
-                "Bearish": "#dc2626",           # red
+                "Bearish": "#dc2626",
                 "Moderately Bearish": "#ef4444",
-                "Sideways/Breakout": "#2563eb", # blue
+                "Sideways/Breakout": "#2563eb",
                 "Sideways": "#3b82f6",
-                "Breakout": "#9333ea"           # violet
+                "Breakout": "#9333ea"
             }
             sentiment_color = color_map.get(sentiment, "#111827")
 
-            # --- Display Relationship Box with Condition Details ---
+            # --- Display Relationship Box ---
             st.markdown(f"""
                 <div style="
                     text-align:center;
@@ -161,58 +165,65 @@ if uploaded_file is not None:
                     border: 1px solid #d1d5db;
                 ">
                     <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
-                         Two Day Pivot Relationship Details
+                        🧭 Two Day Pivot Relationship Details
                     </div>
                     <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
                         {relationship} → 
                         <span style="color:{sentiment_color}; font-weight:bold;">{sentiment}</span>
                     </div>
                     <div style="font-size:15px; color:#374151;">
-                        <b>Current Day ({curr_date}):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}<br>
-                        <b>Next Trading Day ({next_date}):</b> TC = {curr_tc:.2f}, BC = {curr_bc:.2f}<br>
+                        <b>Current Day ({curr_date}):</b> TC = {tc:.2f}, BC = {bc:.2f}<br>
+                        <b>Next Trading Day ({next_date}):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}<br>
                         <i>Condition satisfied:</i> {condition_text}
                     </div>
                 </div>
             """, unsafe_allow_html=True)
 
-        # --- Chart: CPR Lines ---
+        # --- Chart: CPR Lines (only actual trading days) ---
         df_tail = df.tail(10).copy()
-        next_row = pd.DataFrame({"Date": [next_day], "High": [np.nan], "Low": [np.nan], "Close": [np.nan]})
+
+        # Compute CPR band for next trading day (projection only)
+        next_row = pd.DataFrame({
+            "Date": [next_day],
+            "Pivot": [pivot],
+            "BC": [next_bc],
+            "TC": [next_tc]
+        })
         df_tail = pd.concat([df_tail, next_row], ignore_index=True)
-        df_tail.loc[df_tail.index[-1], ["Pivot", "BC", "TC"]] = [pivot, bc, tc]
 
         fig = go.Figure()
 
         for i, row in df_tail.iterrows():
             date = row["Date"]
-            x0 = date - pd.Timedelta(hours=16)
-            x1 = date + pd.Timedelta(hours=16)
+            # Plot only real trading days (not weekends)
+            if date.weekday() < 5:
+                x0 = date - pd.Timedelta(hours=16)
+                x1 = date + pd.Timedelta(hours=16)
+                fig.add_trace(go.Scatter(
+                    x=[x0, x1], y=[row["TC"], row["TC"]],
+                    mode="lines", line=dict(color="red", width=2),
+                    name="TC" if i == 0 else None))
+                fig.add_trace(go.Scatter(
+                    x=[x0, x1], y=[row["Pivot"], row["Pivot"]],
+                    mode="lines", line=dict(color="black", width=2, dash="dot"),
+                    name="Pivot" if i == 0 else None))
+                fig.add_trace(go.Scatter(
+                    x=[x0, x1], y=[row["BC"], row["BC"]],
+                    mode="lines", line=dict(color="green", width=2),
+                    name="BC" if i == 0 else None))
 
-            fig.add_trace(go.Scatter(
-                x=[x0, x1], y=[row["TC"], row["TC"]],
-                mode="lines", line=dict(color="red", width=2),
-                name="TC" if i == 0 else None))
-            fig.add_trace(go.Scatter(
-                x=[x0, x1], y=[row["Pivot"], row["Pivot"]],
-                mode="lines", line=dict(color="black", width=2, dash="dot"),
-                name="Pivot" if i == 0 else None))
-            fig.add_trace(go.Scatter(
-                x=[x0, x1], y=[row["BC"], row["BC"]],
-                mode="lines", line=dict(color="green", width=2),
-                name="BC" if i == 0 else None))
-
+        # Highlight next trading day projection
         fig.add_shape(type="rect",
                       x0=next_day - pd.Timedelta(hours=16),
                       x1=next_day + pd.Timedelta(hours=16),
-                      y0=bc, y1=tc,
+                      y0=next_bc, y1=next_tc,
                       fillcolor="lightpink", opacity=0.25, line=dict(width=0))
 
         fig.update_layout(
-            title=f"CPR Levels (Last 10 Days + {next_day.strftime('%d-%b-%Y')})",
+            title=f"CPR Levels (Last 10 Trading Days + Projected {next_day.strftime('%d-%b-%Y')})",
             xaxis_title="Date", yaxis_title="Price",
             xaxis_rangeslider_visible=False, height=700,
             template="plotly_white", showlegend=True
         )
 
         st.plotly_chart(fig, use_container_width=True)
-
