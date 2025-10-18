@@ -125,14 +125,39 @@ if uploaded_file is not None:
                 relationship = "Inside Value Relationship"
                 sentiment = "Breakout"
 
-            # --- Display Two-Day Relationship ---
-            if relationship:
-                st.markdown(f"""
-                <div style='text-align:center; font-size:22px; font-weight:bold; 
-                            background-color:#f0f0f0; padding:10px; border-radius:10px;'>
-                    🧭 Two Day Pivot Relationship Details \n {relationship} → <span style='color:#2E8B57;'>{sentiment}</span>
+            # --- Choose color based on sentiment ---
+            color_map = {
+                "Bullish": "#16a34a",  # green
+                "Moderately Bullish": "#22c55e",
+                "Bearish": "#dc2626",  # red
+                "Moderately Bearish": "#ef4444",
+                "Sideways/Breakout": "#2563eb",  # blue
+                "Sideways": "#3b82f6",
+                "Breakout": "#9333ea"  # violet
+            }
+            sentiment_color = color_map.get(sentiment, "#111827")
+
+            # --- Display Two-Day Relationship with Colorful Card ---
+            st.markdown(f"""
+                <div style="
+                    text-align:center;
+                    font-size:22px;
+                    font-weight:bold;
+                    background: linear-gradient(135deg, #dbeafe, #fef3c7);
+                    padding:18px;
+                    border-radius:15px;
+                    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+                    margin-top:25px;
+                ">
+                    <div style="font-size:26px; color:#1E3A8A; margin-bottom:10px; text-transform:uppercase;">
+                        🧭 Two Day Pivot Relationship Details
+                    </div>
+                    <div style="font-size:24px; color:#111827;">
+                        {relationship} → 
+                        <span style="color:{sentiment_color}; font-weight:bold;">{sentiment}</span>
+                    </div>
                 </div>
-                """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
         # --- Chart: CPR Lines ---
         df_tail = df.tail(10).copy()
@@ -172,5 +197,3 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
-
-
