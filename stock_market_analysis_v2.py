@@ -86,44 +86,54 @@ if uploaded_file is not None:
         if prev_row is not None:
             prev_tc, prev_bc = prev_row["TC"], prev_row["BC"]
             curr_tc, curr_bc = last_row["TC"], last_row["BC"]
+            prev_date = prev_row["Date"].strftime("%d-%b-%Y")
+            curr_date = last_row["Date"].strftime("%d-%b-%Y")
 
             relationship = None
             sentiment = None
+            condition_text = ""
 
             # 1️⃣ Higher Value Relationship
             if curr_bc > prev_tc:
                 relationship = "Higher Value Relationship"
                 sentiment = "Bullish"
+                condition_text = f"Current BC ({curr_bc:.2f}) > Previous TC ({prev_tc:.2f})"
 
             # 2️⃣ Overlapping Higher Value Relationship
             elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
                 relationship = "Overlapping Higher Value Relationship"
                 sentiment = "Moderately Bullish"
+                condition_text = f"Current TC ({curr_tc:.2f}) > Prev TC ({prev_tc:.2f}), and Current BC ({curr_bc:.2f}) < Prev TC but > Prev BC"
 
             # 3️⃣ Lower Value Relationship
             elif curr_tc < prev_bc:
                 relationship = "Lower Value Relationship"
                 sentiment = "Bearish"
+                condition_text = f"Current TC ({curr_tc:.2f}) < Previous BC ({prev_bc:.2f})"
 
             # 4️⃣ Overlapping Lower Value Relationship
             elif curr_bc < prev_bc and curr_tc > prev_bc:
                 relationship = "Overlapping Lower Value Relationship"
                 sentiment = "Moderately Bearish"
+                condition_text = f"Current BC ({curr_bc:.2f}) < Prev BC ({prev_bc:.2f}), and Current TC ({curr_tc:.2f}) > Prev BC"
 
             # 5️⃣ Unchanged Value Relationship
             elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
                 relationship = "Unchanged Value Relationship"
                 sentiment = "Sideways/Breakout"
+                condition_text = f"Current and Previous CPR nearly equal: ΔTC={abs(curr_tc - prev_tc):.2f}, ΔBC={abs(curr_bc - prev_bc):.2f}"
 
             # 6️⃣ Outside Value Relationship
             elif curr_tc > prev_tc and curr_bc < prev_bc:
                 relationship = "Outside Value Relationship"
                 sentiment = "Sideways"
+                condition_text = f"Current TC ({curr_tc:.2f}) > Prev TC ({prev_tc:.2f}) and Current BC ({curr_bc:.2f}) < Prev BC ({prev_bc:.2f})"
 
             # 7️⃣ Inside Value Relationship
             elif curr_tc < prev_tc and curr_bc > prev_bc:
                 relationship = "Inside Value Relationship"
                 sentiment = "Breakout"
+                condition_text = f"Current TC ({curr_tc:.2f}) < Prev TC ({prev_tc:.2f}) and Current BC ({curr_bc:.2f}) > Prev BC ({prev_bc:.2f})"
 
             # --- Choose sentiment color ---
             color_map = {
@@ -137,25 +147,30 @@ if uploaded_file is not None:
             }
             sentiment_color = color_map.get(sentiment, "#111827")
 
-            # --- Display Two-Day Relationship with Decent Color Box ---
+            # --- Display Relationship Box with Condition Details ---
             st.markdown(f"""
                 <div style="
                     text-align:center;
                     font-size:22px;
                     font-weight:bold;
-                    background: linear-gradient(145deg, #e0f2fe, #ffffff);
-                    padding:20px;
+                    background: linear-gradient(145deg, #f0f9ff, #ffffff);
+                    padding:22px;
                     border-radius:15px;
                     box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
                     margin-top:25px;
                     border: 1px solid #d1d5db;
                 ">
-                    <div style="font-size:26px; color:#1E40AF; margin-bottom:8px; text-transform:uppercase;">
-                         Two Day Pivot Relationship Details
+                    <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
+                        🧭 Two Day Pivot Relationship Details
                     </div>
-                    <div style="font-size:24px; color:#1f2937;">
+                    <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
                         {relationship} → 
                         <span style="color:{sentiment_color}; font-weight:bold;">{sentiment}</span>
+                    </div>
+                    <div style="font-size:15px; color:#374151;">
+                        <b>Previous Day ({prev_date}):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}<br>
+                        <b>Current Day ({curr_date}):</b> TC = {curr_tc:.2f}, BC = {curr_bc:.2f}<br>
+                        <i>Condition satisfied:</i> {condition_text}
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -200,4 +215,3 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
-
