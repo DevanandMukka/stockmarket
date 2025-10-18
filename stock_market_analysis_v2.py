@@ -190,7 +190,7 @@ else:
                 <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
             </div>
             <div style="font-size:15px; color:#374151;">
-                <b>Previous Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
+                <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
                 <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
                 <i>Condition satisfied:</i> {condition_text or 'N/A'}
             </div>
@@ -331,5 +331,6 @@ else:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
