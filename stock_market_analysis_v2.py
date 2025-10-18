@@ -134,25 +134,25 @@ else:
 
         if curr_bc > prev_tc:
             relationship, sentiment = "Higher Value Relationship", "Bullish"
-            condition_text = f"T+1 BC ({curr_bc:.2f}) > T TC ({prev_tc:.2f})"
+            condition_text = f"Next Day BC ({curr_bc:.2f}) > Current Day TC ({prev_tc:.2f})"
         elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
             relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
-            condition_text = f"T+1 TC ({curr_tc:.2f}) > T TC ({prev_tc:.2f}) and BC between ranges"
+            condition_text = f"Next Day TC ({curr_tc:.2f}) > Current Day TC ({prev_tc:.2f}) and BC between ranges"
         elif curr_tc < prev_bc:
             relationship, sentiment = "Lower Value Relationship", "Bearish"
-            condition_text = f"T+1 TC ({curr_tc:.2f}) < T BC ({prev_bc:.2f})"
+            condition_text = f"Next Day TC ({curr_tc:.2f}) < Current Day BC ({prev_bc:.2f})"
         elif curr_bc < prev_bc and curr_tc > prev_bc:
             relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
-            condition_text = f"T+1 BC ({curr_bc:.2f}) < T BC ({prev_bc:.2f}) and TC > T BC"
+            condition_text = f"Next Day BC ({curr_bc:.2f}) < Current Day BC ({prev_bc:.2f}) and TC > Current Day BC"
         elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
             relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
-            condition_text = f"T+1 and T CPRs nearly equal"
+            condition_text = f"Next Day and Current Day CPRs nearly equal"
         elif curr_tc > prev_tc and curr_bc < prev_bc:
             relationship, sentiment = "Outside Value Relationship", "Sideways"
-            condition_text = f"T+1 range fully engulfs T range"
+            condition_text = f"Next Day range fully engulfs Current Day range"
         elif curr_tc < prev_tc and curr_bc > prev_bc:
             relationship, sentiment = "Inside Value Relationship", "Breakout"
-            condition_text = f"T+1 range inside T range"
+            condition_text = f"Next Day range inside Current Day range"
         else:
             relationship, sentiment = "No Clear Relationship", "Neutral"
             condition_text = "N/A"
@@ -331,6 +331,7 @@ else:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
