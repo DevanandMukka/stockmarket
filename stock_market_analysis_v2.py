@@ -104,7 +104,7 @@ else:
         .set_properties(**{"font-size": "16px", "text-align": "center"}) \
         .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
 
-    st.subheader(f"Stock Levels for {next_date.strftime('%A, %d-%b-%Y')} (Calculated from {curr_date.strftime('%d-%b-%Y')})")
+    st.subheader(f"Stock Levels for next trading day {next_date.strftime('%A, %d-%b-%Y')} (Calculated from {curr_date.strftime('%d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
 
     # =================================================================
@@ -331,3 +331,4 @@ else:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
