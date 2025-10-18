@@ -143,7 +143,7 @@ if uploaded_file is not None:
                     text-align:center;
                     font-size:22px;
                     font-weight:bold;
-                    # background: linear-gradient(135deg, #dbeafe, #fef3c7);
+                    background: linear-gradient(135deg, #dbeafe, #fef3c7);
                     padding:18px;
                     border-radius:15px;
                     # box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
@@ -197,5 +197,6 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
 
 
