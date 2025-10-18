@@ -184,7 +184,7 @@ else:
     df_tail = df_trading.tail(selected_days).copy()
     fig = go.Figure()
 
-    # Plot CPR lines for each actual trading day
+    # Plot CPR lines for historical trading days
     for _, row in df_tail.iterrows():
         date = row["Date"]
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
@@ -209,10 +209,10 @@ else:
             showlegend=False
         ))
 
-    # --- Add next trading day's projected CPR (like other days) ---
+    # --- Add projected next-day CPR ---
     next_x0, next_x1 = next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)
 
-    # Highlight box
+    # Highlight the next-day CPR range
     fig.add_shape(
         type="rect",
         x0=next_x0, x1=next_x1,
@@ -222,23 +222,23 @@ else:
         layer="below"
     )
 
-    # Draw next day CPR lines
+    # Draw projected CPR lines for next trading day
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_tc, next_tc],
-        mode="lines", line=dict(color="red", width=2, dash="solid"),
-        hovertemplate=f"Date: {next_date.strftime('%d-%b-%Y')}<br>Next TC: {next_tc:.2f}<extra></extra>",
+        mode="lines", line=dict(color="red", width=2, dash="dash"),
+        hovertemplate=f"Projected TC: {next_tc:.2f}<extra></extra>",
         showlegend=False
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_pivot, next_pivot],
         mode="lines", line=dict(color="black", width=2, dash="dot"),
-        hovertemplate=f"Date: {next_date.strftime('%d-%b-%Y')}<br>Next Pivot: {next_pivot:.2f}<extra></extra>",
+        hovertemplate=f"Projected Pivot: {next_pivot:.2f}<extra></extra>",
         showlegend=False
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_bc, next_bc],
-        mode="lines", line=dict(color="green", width=2),
-        hovertemplate=f"Date: {next_date.strftime('%d-%b-%Y')}<br>Next BC: {next_bc:.2f}<extra></extra>",
+        mode="lines", line=dict(color="green", width=2, dash="dash"),
+        hovertemplate=f"Projected BC: {next_bc:.2f}<extra></extra>",
         showlegend=False
     ))
 
