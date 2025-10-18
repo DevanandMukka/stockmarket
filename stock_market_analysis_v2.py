@@ -307,7 +307,7 @@ else:
         x=[None], y=[None],
         mode='lines',
         line=dict(color='rgba(65, 105, 225, 0.6)', width=4, dash='solid'),
-        name='T+1 CPR Area',
+        name='Next Day CPR Area',
         showlegend=True
     ))
 
@@ -331,6 +331,7 @@ else:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
