@@ -184,7 +184,8 @@ else:
     df_tail = df_trading.tail(selected_days).copy()
     fig = go.Figure()
 
-    for i, row in df_tail.iterrows():
+    # Plot CPR lines for each actual trading day
+    for _, row in df_tail.iterrows():
         date = row["Date"]
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
         tc_val, pivot_val, bc_val = float(row["TC"]), float(row["Pivot"]), float(row["BC"])
@@ -208,27 +209,40 @@ else:
             showlegend=False
         ))
 
-    # --- Highlight projected next-day CPR band ---
+    # --- Add next trading day's projected CPR (like other days) ---
+    next_x0, next_x1 = next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)
+
+    # Highlight box
     fig.add_shape(
         type="rect",
-        x0=next_date - pd.Timedelta(hours=8),
-        x1=next_date + pd.Timedelta(hours=8),
+        x0=next_x0, x1=next_x1,
         y0=next_bc, y1=next_tc,
-        fillcolor="rgba(255,182,193,0.3)",
-        line=dict(width=0),
+        fillcolor="rgba(255,192,203,0.25)",
+        line=dict(color="rgba(255,105,180,0.6)", width=2),
         layer="below"
     )
 
-    # --- Annotations for next-day projected values ---
-    fig.add_annotation(x=next_date, y=next_tc, text=f"Next TC: {next_tc:.2f}",
-                       showarrow=True, arrowhead=2, ax=0, ay=-30,
-                       bgcolor="rgba(255,255,255,0.8)", bordercolor="#ff6b81")
-    fig.add_annotation(x=next_date, y=next_bc, text=f"Next BC: {next_bc:.2f}",
-                       showarrow=True, arrowhead=2, ax=0, ay=30,
-                       bgcolor="rgba(255,255,255,0.8)", bordercolor="#34d399")
-    fig.add_annotation(x=next_date, y=next_pivot, text=f"Next Pivot: {next_pivot:.2f}",
-                       showarrow=False, yshift=10, bgcolor="rgba(255,255,255,0.9)")
+    # Draw next day CPR lines
+    fig.add_trace(go.Scatter(
+        x=[next_x0, next_x1], y=[next_tc, next_tc],
+        mode="lines", line=dict(color="red", width=2, dash="solid"),
+        hovertemplate=f"Date: {next_date.strftime('%d-%b-%Y')}<br>Next TC: {next_tc:.2f}<extra></extra>",
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[next_x0, next_x1], y=[next_pivot, next_pivot],
+        mode="lines", line=dict(color="black", width=2, dash="dot"),
+        hovertemplate=f"Date: {next_date.strftime('%d-%b-%Y')}<br>Next Pivot: {next_pivot:.2f}<extra></extra>",
+        showlegend=False
+    ))
+    fig.add_trace(go.Scatter(
+        x=[next_x0, next_x1], y=[next_bc, next_bc],
+        mode="lines", line=dict(color="green", width=2),
+        hovertemplate=f"Date: {next_date.strftime('%d-%b-%Y')}<br>Next BC: {next_bc:.2f}<extra></extra>",
+        showlegend=False
+    ))
 
+    # --- Layout ---
     fig.update_layout(
         title=f"CPR Levels (Last {selected_days} Trading Days + Projected {next_date.strftime('%d-%b-%Y')})",
         xaxis_title="Date",
@@ -236,7 +250,7 @@ else:
         xaxis_rangeslider_visible=False,
         height=700,
         template="plotly_white",
-        showlegend=False  # removes the right-side legend
+        showlegend=False
     )
 
     st.plotly_chart(fig, use_container_width=True)
