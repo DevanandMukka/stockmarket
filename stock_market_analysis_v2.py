@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from datetime import timedelta
 import plotly.graph_objects as go
 
@@ -34,10 +33,6 @@ else:
         st.stop()
 
     # 1. CALCULATE CPR LEVELS FOR THE NEXT DAY (T+1)
-    # The CPR levels for tomorrow are calculated based on today's (T) H, L, C.
-    # Therefore, we shift the calculated CPR values to the next row to align with the date they are used on.
-    
-    # Calculate daily Pivot, BC, TC based on T's data (will be used for T+1)
     df["Pivot_T_to_T1"] = (df["High"] + df["Low"] + df["Close"]) / 3
     df["BC_T_to_T1"] = (df["High"] + df["Low"]) / 2
     df["TC_T_to_T1"] = df["Pivot_T_to_T1"] + (df["Pivot_T_to_T1"] - df["BC_T_to_T1"])
@@ -55,12 +50,10 @@ else:
     last_day_data = df.iloc[-1]
     
     # 2. CALCULATE T+1 LEVELS (Based on Last Row of Data)
-    # These are the *actual* levels for the next trading day.
     next_pivot = (last_day_data["High"] + last_day_data["Low"] + last_day_data["Close"]) / 3
     next_bc = (last_day_data["High"] + last_day_data["Low"]) / 2
     next_tc = next_pivot + (next_pivot - next_bc)
     
-    # Ensure TC > BC for T+1
     if next_bc > next_tc:
         next_tc, next_bc = next_bc, next_tc
         
@@ -114,47 +107,55 @@ else:
     st.subheader(f"Stock Levels for {next_date.strftime('%A, %d-%b-%Y')} (Calculated from {curr_date.strftime('%d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
 
+    # =================================================================
     # --- Two-day pivot relationship ---
-    # The relationship needs T levels (calculated from T-1 data) and T+1 levels (calculated from T data).
+    # Fix: Use the T-day date and the CPR levels for the T day (calculated from T-1 data)
+    # The T-day levels are found in the 'Pivot', 'BC', 'TC' columns of the LAST ROW (iloc[-1])
+    # The date is the LAST ROW's date (iloc[-1]["Date"])
     
-    # Get T day CPR levels (calculated from T-1 data, relevant for T)
-    if len(df) < 3:
-        st.warning("Need at least 3 trading days in the file to compute a two-day relationship (T-1 and T levels).")
-        prev_row = df.iloc[-1] # Fallback: use T day itself if T-1 isn't there, though relationship will be meaningless.
+    df_cpr_ready = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
+    
+    if len(df_cpr_ready) < 1:
+         st.warning("Not enough data to compute T-day levels for relationship analysis.")
+         # Fallback to display the T+1 table and graph only
+         sentiment, relationship, condition_text = "N/A", "N/A", "N/A"
+         prev_pivot, prev_bc, prev_tc = 0.0, 0.0, 0.0
+         prev_date = curr_date # Use current date as placeholder
     else:
-        prev_row = df.iloc[-2] # This is the T day levels (based on T-1 data)
+        # T-day levels (calculated from T-1 data, relevant for T day)
+        prev_row_cpr = df_cpr_ready.iloc[-1] 
+        prev_pivot, prev_bc, prev_tc = float(prev_row_cpr["Pivot"]), float(prev_row_cpr["BC"]), float(prev_row_cpr["TC"])
+        prev_date = prev_row_cpr["Date"] # This is T-day's date!
     
-    prev_pivot, prev_bc, prev_tc = float(prev_row["Pivot"]), float(prev_row["BC"]), float(prev_row["TC"])
-    prev_date = prev_row["Date"]
+        # T+1 levels (calculated from T data, relevant for T+1 day)
+        curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc 
     
-    curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc # T+1 levels are the 'Current' for the relationship
-    
-    relationship, sentiment, condition_text = None, None, ""
+        relationship, sentiment, condition_text = None, None, ""
 
-    if curr_bc > prev_tc:
-        relationship, sentiment = "Higher Value Relationship", "Bullish"
-        condition_text = f"T+1 BC ({curr_bc:.2f}) > T TC ({prev_tc:.2f})"
-    elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
-        relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
-        condition_text = f"T+1 TC ({curr_tc:.2f}) > T TC ({prev_tc:.2f}) and BC between ranges"
-    elif curr_tc < prev_bc:
-        relationship, sentiment = "Lower Value Relationship", "Bearish"
-        condition_text = f"T+1 TC ({curr_tc:.2f}) < T BC ({prev_bc:.2f})"
-    elif curr_bc < prev_bc and curr_tc > prev_bc:
-        relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
-        condition_text = f"T+1 BC ({curr_bc:.2f}) < T BC ({prev_bc:.2f}) and TC > T BC"
-    elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
-        relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
-        condition_text = f"T+1 and T CPRs nearly equal"
-    elif curr_tc > prev_tc and curr_bc < prev_bc:
-        relationship, sentiment = "Outside Value Relationship", "Sideways"
-        condition_text = f"T+1 range fully engulfs T range"
-    elif curr_tc < prev_tc and curr_bc > prev_bc:
-        relationship, sentiment = "Inside Value Relationship", "Breakout"
-        condition_text = f"T+1 range inside T range"
-    else:
-        relationship, sentiment = "No Clear Relationship", "Neutral"
-        condition_text = "N/A"
+        if curr_bc > prev_tc:
+            relationship, sentiment = "Higher Value Relationship", "Bullish"
+            condition_text = f"T+1 BC ({curr_bc:.2f}) > T TC ({prev_tc:.2f})"
+        elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
+            relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
+            condition_text = f"T+1 TC ({curr_tc:.2f}) > T TC ({prev_tc:.2f}) and BC between ranges"
+        elif curr_tc < prev_bc:
+            relationship, sentiment = "Lower Value Relationship", "Bearish"
+            condition_text = f"T+1 TC ({curr_tc:.2f}) < T BC ({prev_bc:.2f})"
+        elif curr_bc < prev_bc and curr_tc > prev_bc:
+            relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
+            condition_text = f"T+1 BC ({curr_bc:.2f}) < T BC ({prev_bc:.2f}) and TC > T BC"
+        elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
+            relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
+            condition_text = f"T+1 and T CPRs nearly equal"
+        elif curr_tc > prev_tc and curr_bc < prev_bc:
+            relationship, sentiment = "Outside Value Relationship", "Sideways"
+            condition_text = f"T+1 range fully engulfs T range"
+        elif curr_tc < prev_tc and curr_bc > prev_bc:
+            relationship, sentiment = "Inside Value Relationship", "Breakout"
+            condition_text = f"T+1 range inside T range"
+        else:
+            relationship, sentiment = "No Clear Relationship", "Neutral"
+            condition_text = "N/A"
 
     color_map = {
         "Bullish": "#16a34a",
@@ -195,9 +196,9 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+    # =================================================================
 
-    # 4. Update the Graph Logic 📈
-    # Now includes the CPR levels for the last date in the Excel file (T day)
+    # 4. Graph Logic (Unchanged from previous fix)
     df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
     max_days = len(df_trading)
     default_days = min(7, max_days)
@@ -205,16 +206,13 @@ else:
     selected_days = st.slider(
         "Select number of trading days to display on chart (CPR Levels)",
         min_value=1,
-        max_value=max_days + 1, # Add 1 for the T+1 day
-        value=default_days + 1, # Default to 7 days + 1 T+1 day
+        max_value=max_days + 1, 
+        value=default_days + 1, 
         step=1
     )
 
-    # Include historical data for plotting (T-N to T day levels)
-    # This now correctly takes all available calculated historical levels
     df_plot_historical = df_trading.tail(selected_days - 1).copy()
     
-    # Create a temporary row for the T+1 levels
     next_day_row = pd.DataFrame({
         "Date": [next_date],
         "Pivot": [next_pivot],
@@ -222,19 +220,15 @@ else:
         "TC": [next_tc]
     })
     
-    # Combine historical levels (up to T day) with the new T+1 levels
     df_plot = pd.concat([df_plot_historical[["Date", "Pivot", "BC", "TC"]], next_day_row], ignore_index=True)
     
     fig = go.Figure()
     
-    # Flags to ensure only one legend entry is created for historical data
     hist_tc_added, hist_pivot_added, hist_bc_added = False, False, False
 
     # Plot historical CPR lines (T-N to T levels)
-    # The last row of df_plot is the T+1 level, so we exclude it here for styling
     for i, row in df_plot.iloc[:-1].iterrows():
         date = row["Date"]
-        # Define x-range for the day
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
         tc_val, pivot_val, bc_val = float(row["TC"]), float(row["Pivot"]), float(row["BC"])
         
@@ -277,12 +271,12 @@ else:
         type="rect",
         x0=next_x0, x1=next_x1,
         y0=next_bc, y1=next_tc,
-        fillcolor="rgba(173, 216, 230, 0.4)", # Light blue for next day
+        fillcolor="rgba(173, 216, 230, 0.4)",
         line=dict(color="rgba(65, 105, 225, 0.6)", width=2),
         layer="below",
         name="T+1 CPR Range",
         legendgroup='t_plus_1_range',
-        showlegend=False # Only show the lines in the legend
+        showlegend=False
     )
     
     # Draw T+1 CPR lines with explicit legend entries
