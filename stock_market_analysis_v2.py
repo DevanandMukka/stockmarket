@@ -78,7 +78,7 @@ else:
         next_day += timedelta(days=1)
     next_date = next_day
 
-    # --- Project next-day CPR ---
+    # --- Project next-day CPR based on current day ---
     df["CPR_Width"] = df["TC"] - df["BC"]
     avg_width = df["CPR_Width"].tail(5).mean()
     pivot_diffs = df["Pivot"].diff().tail(5).dropna()
@@ -184,7 +184,7 @@ else:
     df_tail = df_trading.tail(selected_days).copy()
     fig = go.Figure()
 
-    # Plot CPR lines for historical trading days
+    # Plot historical CPR lines
     for _, row in df_tail.iterrows():
         date = row["Date"]
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
@@ -209,10 +209,10 @@ else:
             showlegend=False
         ))
 
-    # --- Add projected next-day CPR ---
+    # --- Plot projected next-day CPR (calculated from last row) ---
     next_x0, next_x1 = next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)
 
-    # Highlight the next-day CPR range
+    # Highlight projected CPR range
     fig.add_shape(
         type="rect",
         x0=next_x0, x1=next_x1,
@@ -226,19 +226,19 @@ else:
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_tc, next_tc],
         mode="lines", line=dict(color="red", width=2, dash="dash"),
-        hovertemplate=f"Projected TC: {next_tc:.2f}<extra></extra>",
+        hovertemplate=f"Projected TC (from {curr_date.strftime('%d-%b-%Y')}): {next_tc:.2f}<extra></extra>",
         showlegend=False
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_pivot, next_pivot],
         mode="lines", line=dict(color="black", width=2, dash="dot"),
-        hovertemplate=f"Projected Pivot: {next_pivot:.2f}<extra></extra>",
+        hovertemplate=f"Projected Pivot (from {curr_date.strftime('%d-%b-%Y')}): {next_pivot:.2f}<extra></extra>",
         showlegend=False
     ))
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_bc, next_bc],
         mode="lines", line=dict(color="green", width=2, dash="dash"),
-        hovertemplate=f"Projected BC: {next_bc:.2f}<extra></extra>",
+        hovertemplate=f"Projected BC (from {curr_date.strftime('%d-%b-%Y')}): {next_bc:.2f}<extra></extra>",
         showlegend=False
     ))
 
