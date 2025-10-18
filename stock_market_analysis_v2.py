@@ -154,8 +154,7 @@ if uploaded_file is not None:
                     # border-radius:15px;
                     # box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
                     # margin-top:25px;
-                    # border: 1px solid #d1d5db;
-                ">
+                    # border: 1px solid #d1d5db;">
                     <div style="font-size:26px; color:#1E3A8A; margin-bottom:10px; text-transform:uppercase;">
                         Two Day Pivot Relationship Details
                     </div>
@@ -204,6 +203,7 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
 
 
 
