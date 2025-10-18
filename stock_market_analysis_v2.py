@@ -35,7 +35,7 @@ else:
 
     # 1. CALCULATE CPR LEVELS FOR THE NEXT DAY (T+1)
     # The CPR levels for tomorrow are calculated based on today's (T) H, L, C.
-    # Therefore, we shift the calculated CPR values to the next row.
+    # Therefore, we shift the calculated CPR values to the next row to align with the date they are used on.
     
     # Calculate daily Pivot, BC, TC based on T's data (will be used for T+1)
     df["Pivot_T_to_T1"] = (df["High"] + df["Low"] + df["Close"]) / 3
@@ -47,7 +47,6 @@ else:
     df.loc[mask_swap, ["TC_T_to_T1", "BC_T_to_T1"]] = df.loc[mask_swap, ["BC_T_to_T1", "TC_T_to_T1"]].values
     
     # Shift the T+1 levels back one row so they align with the date they are used on.
-    # We rename them to remove confusion.
     df["Pivot"] = df["Pivot_T_to_T1"].shift(1)
     df["BC"] = df["BC_T_to_T1"].shift(1)
     df["TC"] = df["TC_T_to_T1"].shift(1)
@@ -66,11 +65,11 @@ else:
         next_tc, next_bc = next_bc, next_tc
         
     # 3. Determine T+1 Date
-    curr_date = last_day_data["Date"]
+    curr_date = last_day_data["Date"] # Last date in the file (T day)
     next_day = curr_date + timedelta(days=1)
     while next_day.weekday() >= 5:  # skip weekends
         next_day += timedelta(days=1)
-    next_date = next_day
+    next_date = next_day # The date for which the new levels are valid (T+1)
 
     # --- Support/resistance levels for T+1 ---
     pivot = next_pivot
@@ -84,7 +83,7 @@ else:
     r2 = pivot + (high - low)
     s2 = pivot - (high - low)
     r3 = r1 + (high - low)
-    s3 = s1 + (high - pivot) # Corrected R3 and S3 formula based on common CPR methods
+    s3 = s1 + (high - pivot) 
     r4 = r3 + (r2 - r1)
     s4 = s3 - (s1 - s2)
     r5 = r4 + (r2 - r1)
@@ -116,12 +115,15 @@ else:
     st.dataframe(styled_df, use_container_width=True)
 
     # --- Two-day pivot relationship ---
-    # The current relationship requires the T+1 levels (next_tc, next_bc) and the T levels (prev_tc, prev_bc)
-    # The CPR calculated for the *last available trading day* (T-1 day data -> T day levels) is used as 'Previous'.
-    # The CPR calculated for the *newest available trading day* (T day data -> T+1 levels) is used as 'Current'.
+    # The relationship needs T levels (calculated from T-1 data) and T+1 levels (calculated from T data).
     
     # Get T day CPR levels (calculated from T-1 data, relevant for T)
-    prev_row = df.iloc[-2]
+    if len(df) < 3:
+        st.warning("Need at least 3 trading days in the file to compute a two-day relationship (T-1 and T levels).")
+        prev_row = df.iloc[-1] # Fallback: use T day itself if T-1 isn't there, though relationship will be meaningless.
+    else:
+        prev_row = df.iloc[-2] # This is the T day levels (based on T-1 data)
+    
     prev_pivot, prev_bc, prev_tc = float(prev_row["Pivot"]), float(prev_row["BC"]), float(prev_row["TC"])
     prev_date = prev_row["Date"]
     
@@ -194,28 +196,25 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
-    # 4. Update the Graph Logic
+    # 4. Update the Graph Logic 📈
+    # Now includes the CPR levels for the last date in the Excel file (T day)
     df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
     max_days = len(df_trading)
     default_days = min(7, max_days)
 
     selected_days = st.slider(
         "Select number of trading days to display on chart (CPR Levels)",
-        min_value=2,
+        min_value=1,
         max_value=max_days + 1, # Add 1 for the T+1 day
-        value=default_days,
+        value=default_days + 1, # Default to 7 days + 1 T+1 day
         step=1
     )
 
     # Include historical data for plotting (T-N to T day levels)
-    df_plot_historical = df_trading.tail(selected_days).copy()
+    # This now correctly takes all available calculated historical levels
+    df_plot_historical = df_trading.tail(selected_days - 1).copy()
     
-    # Remove the last row which contains the levels for T day, as we plot T+1 levels separately.
-    # We want to plot the levels for the dates up to T.
-    if len(df_plot_historical) > 0:
-        df_plot_historical = df_plot_historical.iloc[:-1] # Remove the last row (T day levels, which are calculated from T-1)
-    
-    # Create a temporary row for the T+1 levels to be plotted correctly
+    # Create a temporary row for the T+1 levels
     next_day_row = pd.DataFrame({
         "Date": [next_date],
         "Pivot": [next_pivot],
@@ -223,7 +222,7 @@ else:
         "TC": [next_tc]
     })
     
-    # Combine historical T+1 levels (calculated from T data)
+    # Combine historical levels (up to T day) with the new T+1 levels
     df_plot = pd.concat([df_plot_historical[["Date", "Pivot", "BC", "TC"]], next_day_row], ignore_index=True)
     
     fig = go.Figure()
@@ -231,8 +230,8 @@ else:
     # Flags to ensure only one legend entry is created for historical data
     hist_tc_added, hist_pivot_added, hist_bc_added = False, False, False
 
-    # Plot historical CPR lines (T-N to T-1 levels)
-    # The last row of df_plot is the T+1 level, so we exclude it here
+    # Plot historical CPR lines (T-N to T levels)
+    # The last row of df_plot is the T+1 level, so we exclude it here for styling
     for i, row in df_plot.iloc[:-1].iterrows():
         date = row["Date"]
         # Define x-range for the day
@@ -282,12 +281,11 @@ else:
         line=dict(color="rgba(65, 105, 225, 0.6)", width=2),
         layer="below",
         name="T+1 CPR Range",
-        # Use an invisible trace for the legend entry for the area
         legendgroup='t_plus_1_range',
-        showlegend=True 
+        showlegend=False # Only show the lines in the legend
     )
     
-    # Draw T+1 CPR lines
+    # Draw T+1 CPR lines with explicit legend entries
     fig.add_trace(go.Scatter(
         x=[next_x0, next_x1], y=[next_tc, next_tc],
         mode="lines", line=dict(color="darkred", width=3, dash="dash"),
@@ -309,19 +307,20 @@ else:
         hovertemplate=f"T+1 BC ({next_date.strftime('%d-%b-%Y')}): {next_bc:.2f}<extra></extra>",
         showlegend=True
     ))
-
-    # Add a custom invisible trace for the CPR Range legend entry
+    
+    # Add a custom invisible trace for the CPR Range Area legend entry
     fig.add_trace(go.Scatter(
         x=[None], y=[None],
         mode='lines',
         line=dict(color='rgba(65, 105, 225, 0.6)', width=4, dash='solid'),
-        name='T+1 CPR Range Area',
+        name='T+1 CPR Area',
         showlegend=True
     ))
 
+
     # --- Layout ---
     fig.update_layout(
-        title=f"CPR Levels (Last {selected_days} Trading Days + Levels for {next_date.strftime('%d-%b-%Y')})",
+        title=f"CPR Levels (Last {selected_days - 1} Trading Days + Levels for {next_date.strftime('%d-%b-%Y')})",
         xaxis_title="Date",
         yaxis_title="Price",
         xaxis_rangeslider_visible=False,
