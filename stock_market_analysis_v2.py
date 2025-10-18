@@ -125,40 +125,35 @@ if uploaded_file is not None:
                 relationship = "Inside Value Relationship"
                 sentiment = "Breakout"
 
-            # --- Choose color based on sentiment ---
+            # --- Choose sentiment color ---
             color_map = {
-                "Bullish": "#16a34a",  # green
+                "Bullish": "#16a34a",           # green
                 "Moderately Bullish": "#22c55e",
-                "Bearish": "#dc2626",  # red
+                "Bearish": "#dc2626",           # red
                 "Moderately Bearish": "#ef4444",
-                "Sideways/Breakout": "#2563eb",  # blue
+                "Sideways/Breakout": "#2563eb", # blue
                 "Sideways": "#3b82f6",
-                "Breakout": "#9333ea"  # violet
+                "Breakout": "#9333ea"           # violet
             }
             sentiment_color = color_map.get(sentiment, "#111827")
 
-            # --- Display Two-Day Relationship with Colorful Card ---
+            # --- Display Two-Day Relationship with Decent Color Box ---
             st.markdown(f"""
                 <div style="
                     text-align:center;
                     font-size:22px;
                     font-weight:bold;
-                    background: linear-gradient(135deg, #dbeafe, #fef3c7);
-                    padding:18px;
+                    background: linear-gradient(145deg, #e0f2fe, #ffffff);
+                    padding:20px;
                     border-radius:15px;
-                    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+                    box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
                     margin-top:25px;
-
-                    # background: linear-gradient(145deg, #e0f2fe, #ffffff);
-                    # padding:20px;
-                    # border-radius:15px;
-                    # box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
-                    # margin-top:25px;
-                    # border: 1px solid #d1d5db;">
-                    <div style="font-size:26px; color:#1E3A8A; margin-bottom:10px; text-transform:uppercase;">
-                        Two Day Pivot Relationship Details
+                    border: 1px solid #d1d5db;
+                ">
+                    <div style="font-size:26px; color:#1E40AF; margin-bottom:8px; text-transform:uppercase;">
+                        🧭 Two Day Pivot Relationship Details
                     </div>
-                    <div style="font-size:24px; color:#111827;">
+                    <div style="font-size:24px; color:#1f2937;">
                         {relationship} → 
                         <span style="color:{sentiment_color}; font-weight:bold;">{sentiment}</span>
                     </div>
@@ -169,7 +164,6 @@ if uploaded_file is not None:
         df_tail = df.tail(10).copy()
         next_row = pd.DataFrame({"Date": [next_day], "High": [np.nan], "Low": [np.nan], "Close": [np.nan]})
         df_tail = pd.concat([df_tail, next_row], ignore_index=True)
-
         df_tail.loc[df_tail.index[-1], ["Pivot", "BC", "TC"]] = [pivot, bc, tc]
 
         fig = go.Figure()
@@ -179,15 +173,18 @@ if uploaded_file is not None:
             x0 = date - pd.Timedelta(hours=16)
             x1 = date + pd.Timedelta(hours=16)
 
-            fig.add_trace(go.Scatter(x=[x0, x1], y=[row["TC"], row["TC"]],
-                                     mode="lines", line=dict(color="red", width=2),
-                                     name="TC" if i == 0 else None))
-            fig.add_trace(go.Scatter(x=[x0, x1], y=[row["Pivot"], row["Pivot"]],
-                                     mode="lines", line=dict(color="black", width=2, dash="dot"),
-                                     name="Pivot" if i == 0 else None))
-            fig.add_trace(go.Scatter(x=[x0, x1], y=[row["BC"], row["BC"]],
-                                     mode="lines", line=dict(color="green", width=2),
-                                     name="BC" if i == 0 else None))
+            fig.add_trace(go.Scatter(
+                x=[x0, x1], y=[row["TC"], row["TC"]],
+                mode="lines", line=dict(color="red", width=2),
+                name="TC" if i == 0 else None))
+            fig.add_trace(go.Scatter(
+                x=[x0, x1], y=[row["Pivot"], row["Pivot"]],
+                mode="lines", line=dict(color="black", width=2, dash="dot"),
+                name="Pivot" if i == 0 else None))
+            fig.add_trace(go.Scatter(
+                x=[x0, x1], y=[row["BC"], row["BC"]],
+                mode="lines", line=dict(color="green", width=2),
+                name="BC" if i == 0 else None))
 
         fig.add_shape(type="rect",
                       x0=next_day - pd.Timedelta(hours=16),
@@ -203,9 +200,3 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
-
-
-
-
-
-
