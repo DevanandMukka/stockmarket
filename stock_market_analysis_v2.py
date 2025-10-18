@@ -274,7 +274,7 @@ else:
         fillcolor="rgba(173, 216, 230, 0.4)",
         line=dict(color="rgba(65, 105, 225, 0.6)", width=2),
         layer="below",
-        name="T+1 CPR Range",
+        name="Next Day CPR Range",
         legendgroup='t_plus_1_range',
         showlegend=False
     )
@@ -320,7 +320,7 @@ else:
         xaxis_rangeslider_visible=False,
         height=700,
         template="plotly_white",
-        showlegend=True,
+        # showlegend=True,
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -331,6 +331,7 @@ else:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
