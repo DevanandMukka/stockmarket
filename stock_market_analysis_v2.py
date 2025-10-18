@@ -130,7 +130,7 @@ if uploaded_file is not None:
                 st.markdown(f"""
                 <div style='text-align:center; font-size:22px; font-weight:bold; 
                             background-color:#f0f0f0; padding:10px; border-radius:10px;'>
-                    🧭 Two Day Pivot Relationship {relationship} → <span style='color:#2E8B57;'>{sentiment}</span>
+                    🧭 Two Day Pivot Relationship Details \n {relationship} → <span style='color:#2E8B57;'>{sentiment}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -172,4 +172,5 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
 
