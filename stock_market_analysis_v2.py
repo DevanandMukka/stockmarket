@@ -76,7 +76,7 @@ else:
     r2 = pivot + (high - low)
     s2 = pivot - (high - low)
     r3 = r1 + (high - low)
-    s3 = s1 + (high - pivot) 
+    s3 = s1 - (high - low) 
     r4 = r3 + (r2 - r1)
     s4 = s3 - (s1 - s2)
     r5 = r4 + (r2 - r1)
@@ -331,6 +331,7 @@ else:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
