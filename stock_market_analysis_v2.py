@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 # --- App title ---
 st.set_page_config(layout="wide")
-st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR Calculator</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR & Camarilla Calculator</h1>", unsafe_allow_html=True)
 
 # --- File uploader ---
 uploaded_file = st.file_uploader("Upload Excel File with Stock Data (Date, High, Low, Close)", type=["xlsx", "xls"])
@@ -24,53 +24,45 @@ else:
         st.error(f"Excel file must contain columns: {required_cols}")
         st.stop()
 
-    # --- Data preparation ---
+    # --- Data prep ---
     df = df.sort_values("Date").reset_index(drop=True)
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
     df = df.dropna(subset=["Date"])
     if len(df) < 2:
-        st.warning("Need at least 2 trading days in the file to compute relationships.")
+        st.warning("Need at least 2 trading days in the file.")
         st.stop()
 
-    # 1. CALCULATE CPR LEVELS FOR THE NEXT DAY (T+1)
+    # --- CPR calculations (unchanged) ---
     df["Pivot_T_to_T1"] = (df["High"] + df["Low"] + df["Close"]) / 3
     df["BC_T_to_T1"] = (df["High"] + df["Low"]) / 2
     df["TC_T_to_T1"] = df["Pivot_T_to_T1"] + (df["Pivot_T_to_T1"] - df["BC_T_to_T1"])
-    
-    # Ensure TC is always the upper value and BC the lower value
+
     mask_swap = df["BC_T_to_T1"] > df["TC_T_to_T1"]
     df.loc[mask_swap, ["TC_T_to_T1", "BC_T_to_T1"]] = df.loc[mask_swap, ["BC_T_to_T1", "TC_T_to_T1"]].values
-    
-    # Shift the T+1 levels back one row so they align with the date they are used on.
+
     df["Pivot"] = df["Pivot_T_to_T1"].shift(1)
     df["BC"] = df["BC_T_to_T1"].shift(1)
     df["TC"] = df["TC_T_to_T1"].shift(1)
-    
-    # The last row of the original H, L, C data (T day) is used to calculate the CPR for the *next* day (T+1).
+
     last_day_data = df.iloc[-1]
-    
-    # 2. CALCULATE T+1 LEVELS (Based on Last Row of Data)
     next_pivot = (last_day_data["High"] + last_day_data["Low"] + last_day_data["Close"]) / 3
     next_bc = (last_day_data["High"] + last_day_data["Low"]) / 2
     next_tc = next_pivot + (next_pivot - next_bc)
-    
     if next_bc > next_tc:
         next_tc, next_bc = next_bc, next_tc
-        
-    # 3. Determine T+1 Date
-    curr_date = last_day_data["Date"]  # Last date in the file (T day)
-    next_day = curr_date + timedelta(days=1)
-    while next_day.weekday() >= 5:  # skip weekends
-        next_day += timedelta(days=1)
-    next_date = next_day  # The date for which the new levels are valid (T+1)
 
-    # --- Support/resistance levels for T+1 ---
+    curr_date = last_day_data["Date"]
+    next_day = curr_date + timedelta(days=1)
+    while next_day.weekday() >= 5:
+        next_day += timedelta(days=1)
+    next_date = next_day
+
     pivot = next_pivot
     bc = next_bc
     tc = next_tc
     high = last_day_data["High"]
     low = last_day_data["Low"]
-    
+
     r1 = (2 * pivot) - low
     s1 = (2 * pivot) - high
     r2 = pivot + (high - low)
@@ -82,195 +74,103 @@ else:
     r5 = r4 + (r2 - r1)
     s5 = s4 - (s1 - s2)
 
-    # --- Result table for T+1 ---
     result_df = pd.DataFrame({
         "Metric": ["R5", "R4", "R3", "R2", "R1",
                    "CPR - Top Central", "Pivot", "CPR - Bottom Central",
                    "S1", "S2", "S3", "S4", "S5"],
         "Value": [r5, r4, r3, r2, r1, tc, pivot, bc, s1, s2, s3, s4, s5]
     })
-    
-    # --- Style result table ---
+
     def color_metrics(val, metric):
         if "S" in metric or metric == "CPR - Bottom Central":
             return 'color: green; font-weight: bold;'
         elif "R" in metric:
             return 'color: red; font-weight: bold;'
-        else:
-            return 'color: black; font-weight: bold;'
+        return 'color: black; font-weight: bold;'
 
     styled_df = result_df.style.format({"Value": "{:.2f}"}) \
-        .apply(lambda col: [color_metrics(v, m) for v, m in zip(result_df["Value"], result_df["Metric"])], axis=0) \
-        .set_properties(**{"font-size": "16px", "text-align": "center"}) \
-        .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
-
-    st.subheader(f"Stock Levels for next trading day i.e., {next_date.strftime('%A, %d-%b-%Y')} (Calculated from {curr_date.strftime('%d-%b-%Y')})")
+        .apply(lambda col: [color_metrics(v, m) for v, m in zip(result_df["Value"], result_df["Metric"])], axis=0)
+    st.subheader(f"Stock Levels for next trading day i.e., {next_date.strftime('%A, %d-%b-%Y')} (from {curr_date.strftime('%d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
 
-    # =================================================================
-    # --- TWO DAY RELATIONSHIP LOGIC (unchanged) ---
+    # --- Two-day relationship logic (unchanged) ---
     df_cpr_ready = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
-    if len(df_cpr_ready) < 1:
-         st.warning("Not enough data to compute T-day levels for relationship analysis.")
-         sentiment, relationship, condition_text = "N/A", "N/A", "N/A"
-         prev_pivot, prev_bc, prev_tc = 0.0, 0.0, 0.0
-         prev_date = curr_date
-    else:
-        prev_row_cpr = df_cpr_ready.iloc[-1]
-        prev_pivot, prev_bc, prev_tc = float(prev_row_cpr["Pivot"]), float(prev_row_cpr["BC"]), float(prev_row_cpr["TC"])
-        prev_date = prev_row_cpr["Date"]
-    
-        curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc 
-        relationship, sentiment, condition_text = None, None, ""
-
+    relationship, sentiment = "N/A", "N/A"
+    if len(df_cpr_ready) > 1:
+        prev_row = df_cpr_ready.iloc[-1]
+        prev_tc, prev_bc = prev_row["TC"], prev_row["BC"]
+        curr_tc, curr_bc = next_tc, next_bc
         if curr_bc > prev_tc:
             relationship, sentiment = "Higher Value Relationship", "Bullish"
-            condition_text = f"Next Day BC ({curr_bc:.2f}) > Current Day TC ({prev_tc:.2f})"
         elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
             relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
-            condition_text = f"Next Day TC ({curr_tc:.2f}) > Current Day TC ({prev_tc:.2f}) and BC between ranges"
         elif curr_tc < prev_bc:
             relationship, sentiment = "Lower Value Relationship", "Bearish"
-            condition_text = f"Next Day TC ({curr_tc:.2f}) < Current Day BC ({prev_bc:.2f})"
         elif curr_bc < prev_bc and curr_tc > prev_bc:
             relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
-            condition_text = f"Next Day BC ({curr_bc:.2f}) < Current Day BC ({prev_bc:.2f}) and TC > Current Day BC"
         elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
             relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
-            condition_text = "Next Day and Current Day CPRs nearly equal"
         elif curr_tc > prev_tc and curr_bc < prev_bc:
             relationship, sentiment = "Outside Value Relationship", "Sideways"
-            condition_text = "Next Day range fully engulfs Current Day range"
         elif curr_tc < prev_tc and curr_bc > prev_bc:
             relationship, sentiment = "Inside Value Relationship", "Breakout"
-            condition_text = "Next Day range inside Current Day range"
-        else:
-            relationship, sentiment = "No Clear Relationship", "Neutral"
-            condition_text = "N/A"
 
-    color_map = {
-        "Bullish": "#16a34a",
-        "Moderately Bullish": "#22c55e",
-        "Bearish": "#dc2626",
-        "Moderately Bearish": "#ef4444",
-        "Sideways/Breakout": "#2563eb",
-        "Sideways": "#3b82f6",
-        "Breakout": "#9333ea",
-        "Neutral": "#9ca3af"
-    }
-    sentiment_color = color_map.get(sentiment, "#111827")
+    st.markdown(f"<h3 style='text-align:center;'>🧭 {relationship} → <span style='color:blue;'>{sentiment}</span></h3>", unsafe_allow_html=True)
 
-    st.markdown(f"""
-        <div style="text-align:center;font-size:22px;font-weight:bold;background:linear-gradient(145deg,#f0f9ff,#ffffff);
-            padding:22px;border-radius:15px;box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #d1d5db;">
-            <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
-                🧭 Two Day Pivot Relationship Details
-            </div>
-            <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
-                {relationship or '—'} →
-                <span style="color:{sentiment_color};font-weight:bold;">{sentiment or '—'}</span>
-            </div>
-            <div style="font-size:15px;color:#374151;">
-                <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
-                <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
-                <i>Condition satisfied:</i> {condition_text or 'N/A'}
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # =================================================================
-    # --- CPR CHART ---
+    # --- CPR Chart ---
     df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
     max_days = len(df_trading)
     default_days = min(7, max_days)
-
-    selected_days = st.slider(
-        "Select number of trading days to display on chart (CPR Levels)",
-        min_value=1, max_value=max_days + 1, value=default_days + 1, step=1
-    )
+    selected_days = st.slider("Select number of trading days to display (CPR Levels)", 1, max_days + 1, default_days + 1)
 
     df_plot_historical = df_trading.tail(selected_days - 1).copy()
     next_day_row = pd.DataFrame({"Date": [next_date], "Pivot": [next_pivot], "BC": [next_bc], "TC": [next_tc]})
     df_plot = pd.concat([df_plot_historical[["Date", "Pivot", "BC", "TC"]], next_day_row], ignore_index=True)
-    
+
     fig = go.Figure()
-    for i, row in df_plot.iloc[:-1].iterrows():
+    for _, row in df_plot.iterrows():
         date = row["Date"]
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
-        tc_val, pivot_val, bc_val = float(row["TC"]), float(row["Pivot"]), float(row["BC"])
-        fig.add_trace(go.Scatter(x=[x0, x1], y=[tc_val, tc_val], mode="lines", line=dict(color="red", width=2),
-                                 name="Historical TC" if i == 0 else None))
-        fig.add_trace(go.Scatter(x=[x0, x1], y=[pivot_val, pivot_val], mode="lines",
-                                 line=dict(color="black", width=2, dash="dot"), name="Historical Pivot" if i == 0 else None))
-        fig.add_trace(go.Scatter(x=[x0, x1], y=[bc_val, bc_val], mode="lines",
-                                 line=dict(color="green", width=2), name="Historical BC" if i == 0 else None))
-    next_x0, next_x1 = next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)
-    fig.add_trace(go.Scatter(x=[next_x0, next_x1], y=[next_tc, next_tc], mode="lines",
-                             line=dict(color="darkred", width=3, dash="dash"), name="Next Day TC"))
-    fig.add_trace(go.Scatter(x=[next_x0, next_x1], y=[next_pivot, next_pivot], mode="lines",
-                             line=dict(color="darkblue", width=3, dash="dot"), name="Next Day Pivot"))
-    fig.add_trace(go.Scatter(x=[next_x0, next_x1], y=[next_bc, next_bc], mode="lines",
-                             line=dict(color="darkgreen", width=3, dash="dash"), name="Next Day BC"))
-    fig.update_layout(title=f"CPR Levels (Last {selected_days - 1} Trading Days + Levels for {next_date.strftime('%d-%b-%Y')})",
-                      xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=False,
-                      height=700, template="plotly_white", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig.add_trace(go.Scatter(x=[x0, x1], y=[row["TC"], row["TC"]], mode="lines", line=dict(color="red", width=2), name="TC"))
+        fig.add_trace(go.Scatter(x=[x0, x1], y=[row["Pivot"], row["Pivot"]], mode="lines", line=dict(color="black", dash="dot"), name="Pivot"))
+        fig.add_trace(go.Scatter(x=[x0, x1], y=[row["BC"], row["BC"]], mode="lines", line=dict(color="green", width=2), name="BC"))
+
+    fig.update_layout(title="CPR Levels (Historical + Next Day)", height=600, template="plotly_white",
+                      xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=False)
     st.plotly_chart(fig, use_container_width=True)
 
     # =================================================================
-    # --- CAMARILLA FORMULA SECTION ---
-    RANGE = last_day_data["High"] - last_day_data["Close"]
-    camarilla_r5 = (last_day_data["High"] / last_day_data["Low"]) * last_day_data["Close"]
-    camarilla_r4 = last_day_data["Close"] + RANGE * 1.1 / 2
-    camarilla_r3 = last_day_data["Close"] + RANGE * 1.1 / 4
-    camarilla_r2 = last_day_data["Close"] + RANGE * 1.1 / 6
-    camarilla_r1 = last_day_data["Close"] + RANGE * 1.1 / 12
-    camarilla_s1 = last_day_data["Close"] - RANGE * 1.1 / 12
-    camarilla_s2 = last_day_data["Close"] - RANGE * 1.1 / 6
-    camarilla_s3 = last_day_data["Close"] - RANGE * 1.1 / 4
-    camarilla_s4 = last_day_data["Close"] - RANGE * 1.1 / 2
-    camarilla_s5 = last_day_data["Close"] - (camarilla_r5 - last_day_data["Close"])
+    # --- CAMARILLA FORMULA (Historical + Next Day) ---
+    df["RANGE"] = df["High"] - df["Close"]
+    df["R3"] = df["Close"] + df["RANGE"] * 1.1 / 4
+    df["S3"] = df["Close"] - df["RANGE"] * 1.1 / 4
 
+    # Add next day Camarilla
+    next_R3 = last_day_data["Close"] + (last_day_data["High"] - last_day_data["Close"]) * 1.1 / 4
+    next_S3 = last_day_data["Close"] - (last_day_data["High"] - last_day_data["Close"]) * 1.1 / 4
+    next_row = pd.DataFrame({"Date": [next_date], "R3": [next_R3], "S3": [next_S3]})
+    df_camarilla = pd.concat([df[["Date", "R3", "S3"]], next_row], ignore_index=True)
+
+    # Camarilla Table
     camarilla_df = pd.DataFrame({
-        "Metric": ["R5", "R4", "R3", "R2", "R1", "Close", "S1", "S2", "S3", "S4", "S5"],
-        "Value": [camarilla_r5, camarilla_r4, camarilla_r3, camarilla_r2, camarilla_r1,
-                  last_day_data["Close"], camarilla_s1, camarilla_s2, camarilla_s3, camarilla_s4, camarilla_s5]
+        "Metric": ["R3", "S3"],
+        "Value": [next_R3, next_S3]
     })
+    st.subheader(f"📘 Camarilla Pivot Levels (Next Day: {next_date.strftime('%d-%b-%Y')})")
+    st.dataframe(camarilla_df.style.format({"Value": "{:.2f}"}).set_properties(**{"text-align": "center"}))
 
-    def color_camarilla(val, metric):
-        if "S" in metric:
-            return 'color: green; font-weight: bold;'
-        elif "R" in metric:
-            return 'color: red; font-weight: bold;'
-        elif "Close" in metric:
-            return 'color: blue; font-weight: bold;'
-        return 'color: black; font-weight: bold;'
-
-    styled_camarilla_df = camarilla_df.style.format({"Value": "{:.2f}"}) \
-        .apply(lambda col: [color_camarilla(v, m) for v, m in zip(camarilla_df["Value"], camarilla_df["Metric"])], axis=0) \
-        .set_properties(**{"font-size": "16px", "text-align": "center"}) \
-        .set_table_styles([{"selector": "th", "props": [("font-size", "16px"), ("text-align", "center")]}])
-
-    st.subheader(f"📘 Camarilla Pivot Levels for next trading day ({next_date.strftime('%A, %d-%b-%Y')})")
-    st.dataframe(styled_camarilla_df, use_container_width=True)
-
-    # --- CAMARILLA CHART (R3 & S3) ---
+    # --- Camarilla Chart (R3 & S3 Historical + Next Day) ---
     fig_camarilla = go.Figure()
-    fig_camarilla.add_trace(go.Scatter(
-        x=[next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)],
-        y=[camarilla_r3, camarilla_r3], mode="lines", line=dict(color="red", width=3),
-        name=f"R3 ({camarilla_r3:.2f})"))
-    fig_camarilla.add_trace(go.Scatter(
-        x=[next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)],
-        y=[camarilla_s3, camarilla_s3], mode="lines", line=dict(color="green", width=3),
-        name=f"S3 ({camarilla_s3:.2f})"))
-    fig_camarilla.add_trace(go.Scatter(
-        x=[next_date - pd.Timedelta(hours=8), next_date + pd.Timedelta(hours=8)],
-        y=[last_day_data["Close"], last_day_data["Close"]], mode="lines",
-        line=dict(color="blue", width=2, dash="dot"),
-        name=f"Previous Close ({last_day_data['Close']:.2f})"))
+    for _, row in df_camarilla.iterrows():
+        date = row["Date"]
+        x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
+        fig_camarilla.add_trace(go.Scatter(x=[x0, x1], y=[row["R3"], row["R3"]], mode="lines",
+                                           line=dict(color="red", width=2), name="R3"))
+        fig_camarilla.add_trace(go.Scatter(x=[x0, x1], y=[row["S3"], row["S3"]], mode="lines",
+                                           line=dict(color="green", width=2), name="S3"))
+
     fig_camarilla.update_layout(
-        title=f"Camarilla Levels (R3 & S3) for {next_date.strftime('%A, %d-%b-%Y')}",
-        xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=False,
-        height=500, template="plotly_white",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        title=f"Camarilla Levels (R3 & S3) – Last {selected_days - 1} Days + {next_date.strftime('%d-%b-%Y')}",
+        height=500, template="plotly_white", xaxis_title="Date", yaxis_title="Price",
+        xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_camarilla, use_container_width=True)
