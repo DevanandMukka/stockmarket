@@ -258,7 +258,7 @@ else:
 
     styled_camarilla = camarilla_table.style.format({"Value": "{:.2f}"}) \
         .apply(lambda col: [color_camarilla(v, m) for v, m in zip(camarilla_table["Value"], camarilla_table["Metric"])], axis=0)
-    st.subheader(f"📘 Camarilla Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
+    st.subheader(f"📊 Camarilla Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_camarilla, use_container_width=True)
 
         # ==========================================================
@@ -336,6 +336,7 @@ else:
                                 xaxis_rangeslider_visible=False,
                                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
     st.plotly_chart(fig_camarilla, use_container_width=True)
+
 
 
 
