@@ -208,7 +208,7 @@ else:
 
     # ==========================================================
     # --- CAMARILLA CALCULATION (Historical + Next Day) ---
-    df["Range"] = df["High"] - df["Close"]
+    df["Range"] = df["High"] - df["Low"]
     df["R5"] = (df["High"] / df["Low"]) * df["Close"]
     df["R4"] = df["Close"] + df["Range"] * 1.1 / 2
     df["R3"] = df["Close"] + df["Range"] * 1.1 / 4
@@ -336,6 +336,7 @@ else:
                                 xaxis_rangeslider_visible=False,
                                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
     st.plotly_chart(fig_camarilla, use_container_width=True)
+
 
 
 
