@@ -303,7 +303,7 @@ else:
             <div style="text-align:center;font-size:22px;font-weight:bold;background:linear-gradient(145deg,#f0f9ff,#ffffff);
                 padding:22px;border-radius:15px;box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #d1d5db;">
                 <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
-                    🎯 CE Two-Day Camarilla Relationship
+                    🎯 Two-Day Camarilla Relationship
                 </div>
                 <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
                     {relationship} →
@@ -333,4 +333,5 @@ else:
                                 xaxis_rangeslider_visible=False,
                                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
     st.plotly_chart(fig_camarilla, use_container_width=True)
+
 
