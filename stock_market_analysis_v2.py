@@ -223,7 +223,7 @@ else:
     for col in ["Range", "R1", "R2", "R3", "R4", "R5", "S1", "S2", "S3", "S4", "S5"]:
         df[col] = df[col].shift(1)
 
-    rng = last_day_data["High"] - last_day_data["Close"]
+    rng = last_day_data["High"] - last_day_data["Low"]
     next_R5 = (last_day_data["High"] / last_day_data["Low"]) * last_day_data["Close"]
     next_R4 = last_day_data["Close"] + rng * 1.1 / 2
     next_R3 = last_day_data["Close"] + rng * 1.1 / 4
@@ -336,6 +336,7 @@ else:
                                 xaxis_rangeslider_visible=False,
                                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
     st.plotly_chart(fig_camarilla, use_container_width=True)
+
 
 
 
