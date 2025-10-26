@@ -170,6 +170,61 @@ else:
     st.subheader(f"📘 Camarilla Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_camarilla, use_container_width=True)
 
+        # ==========================================================
+    # --- CE TWO-DAY RELATIONSHIP (R3 & S3) ---
+    df_camarilla_ready = df_camarilla.dropna(subset=["R3", "S3"]).copy()
+    if len(df_camarilla_ready) < 2:
+        st.warning("Not enough data for CE two-day relationship.")
+    else:
+        prev_row = df_camarilla_ready.iloc[-2]
+        curr_row = df_camarilla_ready.iloc[-1]
+
+        prev_R3, prev_S3 = prev_row["R3"], prev_row["S3"]
+        curr_R3, curr_S3 = curr_row["R3"], curr_row["S3"]
+
+        relationship, sentiment = "N/A", "N/A"
+
+        if curr_S3 > prev_R3:
+            relationship, sentiment = "CE Higher Value Relationship", "Bullish"
+        elif curr_R3 > prev_R3 and curr_S3 < prev_R3 and curr_S3 > prev_S3:
+            relationship, sentiment = "CE Overlapping Higher Value Relationship", "Moderately Bullish"
+        elif curr_R3 < prev_S3:
+            relationship, sentiment = "CE Lower Value Relationship", "Bearish"
+        elif curr_R3 > prev_S3 and curr_S3 > prev_S3 and curr_S3 < prev_R3:
+            relationship, sentiment = "CE Overlapping Lower Value Relationship", "Moderately Bearish"
+        elif abs(curr_R3 - prev_R3) < 0.05 and abs(curr_S3 - prev_S3) < 0.05:
+            relationship, sentiment = "CE Unchanged Value Relationship", "Sideways/Breakout"
+        elif curr_R3 > prev_R3 and curr_S3 < prev_S3:
+            relationship, sentiment = "CE Outside Value Relationship", "Sideways"
+        elif curr_R3 < prev_R3 and curr_S3 > prev_S3:
+            relationship, sentiment = "CE Inside Value Relationship", "Breakout"
+
+        color_map = {
+            "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
+            "Bearish": "#dc2626", "Moderately Bearish": "#ef4444",
+            "Sideways/Breakout": "#2563eb", "Sideways": "#3b82f6",
+            "Breakout": "#9333ea", "Neutral": "#9ca3af"
+        }
+        sentiment_color = color_map.get(sentiment, "#111827")
+
+        st.markdown(f"""
+            <div style="text-align:center;font-size:22px;font-weight:bold;background:linear-gradient(145deg,#f0f9ff,#ffffff);
+                padding:22px;border-radius:15px;box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #d1d5db;">
+                <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
+                    🎯 Two-Day Camarilla Relationship
+                </div>
+                <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
+                    {relationship} →
+                    <span style="color:{sentiment_color};font-weight:bold;">{sentiment}</span>
+                </div>
+                <div style="font-size:15px;color:#374151;">
+                    <b>Prev Day:</b> R3={prev_R3:.2f}, S3={prev_S3:.2f} <br>
+                    <b>Current Day:</b> R3={curr_R3:.2f}, S3={curr_S3:.2f}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+
     # ==========================================================
     # --- CAMARILLA CHART (Historical + Next Day) ---
     df_camarilla_ready = df_camarilla.dropna(subset=["R3", "S3"]).copy()
@@ -190,3 +245,4 @@ else:
                                 xaxis_rangeslider_visible=False,
                                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
     st.plotly_chart(fig_camarilla, use_container_width=True)
+
