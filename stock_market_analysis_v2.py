@@ -95,102 +95,12 @@ else:
 
     st.subheader(f"📊 CPR Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
-    # =================================================================
-    # --- Two-day pivot relationship ---
-    # Fix: Use the T-day date and the CPR levels for the T day (calculated from T-1 data)
-    # The T-day levels are found in the 'Pivot', 'BC', 'TC' columns of the LAST ROW (iloc[-1])
-    # The date is the LAST ROW's date (iloc[-1]["Date"])
-    
-    df_cpr_ready = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
-    
-    if len(df_cpr_ready) < 1:
-         st.warning("Not enough data to compute T-day levels for relationship analysis.")
-         # Fallback to display the T+1 table and graph only
-         sentiment, relationship, condition_text = "N/A", "N/A", "N/A"
-         prev_pivot, prev_bc, prev_tc = 0.0, 0.0, 0.0
-         prev_date = curr_date # Use current date as placeholder
-    else:
-        # T-day levels (calculated from T-1 data, relevant for T day)
-        prev_row_cpr = df_cpr_ready.iloc[-1] 
-        prev_pivot, prev_bc, prev_tc = float(prev_row_cpr["Pivot"]), float(prev_row_cpr["BC"]), float(prev_row_cpr["TC"])
-        prev_date = prev_row_cpr["Date"] # This is T-day's date!
-    
-        # T+1 levels (calculated from T data, relevant for T+1 day)
-        curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc 
-    
-        relationship, sentiment, condition_text = None, None, ""
-
-        if curr_bc > prev_tc:
-            relationship, sentiment = "Higher Value Relationship", "Bullish"
-            condition_text = f"Next Day BC ({curr_bc:.2f}) > Current Day TC ({prev_tc:.2f})"
-        elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
-            relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
-            condition_text = f"Next Day TC ({curr_tc:.2f}) > Current Day TC ({prev_tc:.2f}) and BC between ranges"
-        elif curr_tc < prev_bc:
-            relationship, sentiment = "Lower Value Relationship", "Bearish"
-            condition_text = f"Next Day TC ({curr_tc:.2f}) < Current Day BC ({prev_bc:.2f})"
-        elif curr_bc < prev_bc and curr_tc > prev_bc:
-            relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
-            condition_text = f"Next Day BC ({curr_bc:.2f}) < Current Day BC ({prev_bc:.2f}) and TC > Current Day BC"
-        elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
-            relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
-            condition_text = f"Next Day and Current Day CPRs nearly equal"
-        elif curr_tc > prev_tc and curr_bc < prev_bc:
-            relationship, sentiment = "Outside Value Relationship", "Sideways"
-            condition_text = f"Next Day range fully engulfs Current Day range"
-        elif curr_tc < prev_tc and curr_bc > prev_bc:
-            relationship, sentiment = "Inside Value Relationship", "Breakout"
-            condition_text = f"Next Day range inside Current Day range"
-        else:
-            relationship, sentiment = "No Clear Relationship", "Neutral"
-            condition_text = "N/A"
-
-    color_map = {
-        "Bullish": "#16a34a",
-        "Moderately Bullish": "#22c55e",
-        "Bearish": "#dc2626",
-        "Moderately Bearish": "#ef4444",
-        "Sideways/Breakout": "#2563eb",
-        "Sideways": "#3b82f6",
-        "Breakout": "#9333ea",
-        "Neutral": "#9ca3af"
-    }
-    sentiment_color = color_map.get(sentiment, "#111827")
-
-    # --- Relationship info box ---
-    st.markdown(f"""
-        <div style="
-            text-align:center;
-            font-size:22px;
-            font-weight:bold;
-            background: linear-gradient(145deg, #f0f9ff, #ffffff);
-            padding:22px;
-            border-radius:15px;
-            box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
-            margin-top:25px;
-            border: 1px solid #d1d5db;
-        ">
-            <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
-                🧭 Two Day Pivot Relationship Details
-            </div>
-            <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
-                {relationship or '—'} →
-                <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
-            </div>
-            <div style="font-size:15px; color:#374151;">
-                <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
-                <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
-                <i>Condition satisfied:</i> {condition_text or 'N/A'}
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-    # =================================================================
 
     # ==========================================================
-    # --- CPR Chart (Restored) ---
+    # --- CPR Chart (Historical + Next Day) ---
     df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
-    selected_days = st.slider("Select number of days to display (CPR Levels)", 1, len(df_trading) + 1, min(7, len(df_trading)) + 1)
-    df_plot_historical = df_trading.tail(selected_days - 1).copy()
+    selected_days_cpr = st.slider("Select number of days to display (CPR Levels)", 1, len(df_trading) + 1, min(7, len(df_trading)) + 1)
+    df_plot_historical = df_trading.tail(selected_days_cpr - 1).copy()
     next_day_row = pd.DataFrame({"Date": [next_date], "Pivot": [next_pivot], "BC": [next_bc], "TC": [next_tc]})
     df_plot = pd.concat([df_plot_historical[["Date", "Pivot", "BC", "TC"]], next_day_row], ignore_index=True)
 
@@ -219,7 +129,6 @@ else:
     df["S4"] = df["Close"] - df["Range"] * 1.1 / 2
     df["S5"] = df["Close"] - (df["R5"] - df["Close"])
 
-    # Shift one day for next-day usage
     for col in ["Range", "R1", "R2", "R3", "R4", "R5", "S1", "S2", "S3", "S4", "S5"]:
         df[col] = df[col].shift(1)
 
@@ -242,12 +151,11 @@ else:
     })
     df_camarilla = pd.concat([df[["Date", "Range", "R1", "R2", "R3", "R4", "R5", "S1", "S2", "S3", "S4", "S5"]], next_row], ignore_index=True)
 
-    # --- Camarilla Table for Next Day ---
+    # --- Camarilla Table ---
     camarilla_table = pd.DataFrame({
         "Metric": ["Range", "R5", "R4", "R3", "R2", "R1", "S1", "S2", "S3", "S4", "S5"],
         "Value": [rng, next_R5, next_R4, next_R3, next_R2, next_R1, next_S1, next_S2, next_S3, next_S4, next_S5]
     })
-
     def color_camarilla(val, metric):
         if "Range" in metric:
             return 'color: blue; font-weight: bold;'
@@ -263,64 +171,13 @@ else:
     st.dataframe(styled_camarilla, use_container_width=True)
 
     # ==========================================================
-    # --- CE TWO-DAY RELATIONSHIP (R3 & S3) ---
+    # --- CAMARILLA CHART (Historical + Next Day) ---
     df_camarilla_ready = df_camarilla.dropna(subset=["R3", "S3"]).copy()
-    if len(df_camarilla_ready) < 2:
-        st.warning("Not enough data for CE two-day relationship.")
-    else:
-        prev_row = df_camarilla_ready.iloc[-2]
-        curr_row = df_camarilla_ready.iloc[-1]
+    selected_days_cam = st.slider("Select number of days to display (Camarilla Levels)", 1, len(df_camarilla_ready) + 1, min(7, len(df_camarilla_ready)) + 1)
+    df_camarilla_plot = df_camarilla_ready.tail(selected_days_cam)
 
-        prev_R3, prev_S3 = prev_row["R3"], prev_row["S3"]
-        curr_R3, curr_S3 = curr_row["R3"], curr_row["S3"]
-
-        relationship, sentiment = "N/A", "N/A"
-
-        if curr_S3 > prev_R3:
-            relationship, sentiment = "CE Higher Value Relationship", "Bullish"
-        elif curr_R3 > prev_R3 and curr_S3 < prev_R3 and curr_S3 > prev_S3:
-            relationship, sentiment = "CE Overlapping Higher Value Relationship", "Moderately Bullish"
-        elif curr_R3 < prev_S3:
-            relationship, sentiment = "CE Lower Value Relationship", "Bearish"
-        elif curr_R3 > prev_S3 and curr_S3 > prev_S3 and curr_S3 < prev_R3:
-            relationship, sentiment = "CE Overlapping Lower Value Relationship", "Moderately Bearish"
-        elif abs(curr_R3 - prev_R3) < 0.05 and abs(curr_S3 - prev_S3) < 0.05:
-            relationship, sentiment = "CE Unchanged Value Relationship", "Sideways/Breakout"
-        elif curr_R3 > prev_R3 and curr_S3 < prev_S3:
-            relationship, sentiment = "CE Outside Value Relationship", "Sideways"
-        elif curr_R3 < prev_R3 and curr_S3 > prev_S3:
-            relationship, sentiment = "CE Inside Value Relationship", "Breakout"
-
-        color_map = {
-            "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
-            "Bearish": "#dc2626", "Moderately Bearish": "#ef4444",
-            "Sideways/Breakout": "#2563eb", "Sideways": "#3b82f6",
-            "Breakout": "#9333ea", "Neutral": "#9ca3af"
-        }
-        sentiment_color = color_map.get(sentiment, "#111827")
-
-        st.markdown(f"""
-            <div style="text-align:center;font-size:22px;font-weight:bold;background:linear-gradient(145deg,#f0f9ff,#ffffff);
-                padding:22px;border-radius:15px;box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #d1d5db;">
-                <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
-                    🎯 Two-Day Camarilla Relationship
-                </div>
-                <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
-                    {relationship} →
-                    <span style="color:{sentiment_color};font-weight:bold;">{sentiment}</span>
-                </div>
-                <div style="font-size:15px;color:#374151;">
-                    <b>Prev Day:</b> R3={prev_R3:.2f}, S3={prev_S3:.2f} <br>
-                    <b>Current Day:</b> R3={curr_R3:.2f}, S3={curr_S3:.2f}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    # ==========================================================
-    # --- CAMARILLA CHART (R3 & S3) ---
-    st.subheader("📈 Camarilla Chart (R3 & S3 Historical + Next Day)")
     fig_camarilla = go.Figure()
-    for _, row in df_camarilla.iterrows():
+    for _, row in df_camarilla_plot.iterrows():
         date = row["Date"]
         if pd.notna(row["R3"]) and pd.notna(row["S3"]):
             x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
@@ -333,5 +190,3 @@ else:
                                 xaxis_rangeslider_visible=False,
                                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
     st.plotly_chart(fig_camarilla, use_container_width=True)
-
-
