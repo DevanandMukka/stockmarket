@@ -45,34 +45,38 @@ else:
     df["Pivot_T_to_T1"] = (df["High"] + df["Low"] + df["Close"]) / 3
     df["BC_T_to_T1"] = (df["High"] + df["Low"]) / 2
     df["TC_T_to_T1"] = df["Pivot_T_to_T1"] + (df["Pivot_T_to_T1"] - df["BC_T_to_T1"])
+
+    # Fix swapped TC/BC values
     mask_swap = df["BC_T_to_T1"] > df["TC_T_to_T1"]
     df.loc[mask_swap, ["TC_T_to_T1", "BC_T_to_T1"]] = df.loc[mask_swap, ["BC_T_to_T1", "TC_T_to_T1"]].values
+
     df["Pivot"] = df["Pivot_T_to_T1"].shift(1)
     df["BC"] = df["BC_T_to_T1"].shift(1)
     df["TC"] = df["TC_T_to_T1"].shift(1)
 
+    # --- Next Day CPR Calculation ---
     last_day_data = df.iloc[-1]
     next_pivot = (last_day_data["High"] + last_day_data["Low"] + last_day_data["Close"]) / 3
     next_bc = (last_day_data["High"] + last_day_data["Low"]) / 2
     next_tc = next_pivot + (next_pivot - next_bc)
+
     if next_bc > next_tc:
         next_tc, next_bc = next_bc, next_tc
 
     curr_date = last_day_data["Date"]
     next_day = curr_date + timedelta(days=1)
-    # For stock market skip weekends, for bitcoin include weekends
     if market_type == "Stock Market":
         while next_day.weekday() >= 5:
             next_day += timedelta(days=1)
     next_date = next_day
 
+    # --- CPR R/S Levels ---
+    high = last_day_data["High"]
+    low = last_day_data["Low"]
     pivot = next_pivot
     bc = next_bc
     tc = next_tc
-    high = last_day_data["High"]
-    low = last_day_data["Low"]
 
-    # CPR R/S Levels
     r1 = (2 * pivot) - low
     s1 = (2 * pivot) - high
     r2 = pivot + (high - low)
@@ -84,6 +88,7 @@ else:
     r5 = r4 + (r2 - r1)
     s5 = s4 - (s1 - s2)
 
+    # --- CPR Table ---
     result_df = pd.DataFrame({
         "Metric": ["R5", "R4", "R3", "R2", "R1",
                    "CPR - Top Central", "Pivot", "CPR - Bottom Central",
@@ -105,28 +110,66 @@ else:
     st.dataframe(styled_df, use_container_width=True)
 
     # ==========================================================
-    # --- CAMARILLA CALCULATION (ONLY R3 & S3) ---
+    # --- CPR CHART ---
+    df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
+    selected_days_cpr = st.slider("Select number of days to display (CPR Levels)", 1, len(df_trading) + 1, min(7, len(df_trading)) + 1)
+    df_plot_historical = df_trading.tail(selected_days_cpr - 1).copy()
+    next_day_row = pd.DataFrame({"Date": [next_date], "Pivot": [next_pivot], "BC": [next_bc], "TC": [next_tc]})
+    df_plot = pd.concat([df_plot_historical[["Date", "Pivot", "BC", "TC"]], next_day_row], ignore_index=True)
+
+    fig_cpr = go.Figure()
+    for _, row in df_plot.iterrows():
+        date = row["Date"]
+        x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
+        fig_cpr.add_trace(go.Scatter(x=[x0, x1], y=[row["TC"], row["TC"]],
+                                     mode="lines", line=dict(color="red", width=2), name="TC"))
+        fig_cpr.add_trace(go.Scatter(x=[x0, x1], y=[row["Pivot"], row["Pivot"]],
+                                     mode="lines", line=dict(color="black", dash="dot"), name="Pivot"))
+        fig_cpr.add_trace(go.Scatter(x=[x0, x1], y=[row["BC"], row["BC"]],
+                                     mode="lines", line=dict(color="green", width=2), name="BC"))
+    fig_cpr.update_layout(title="CPR Levels (Historical + Next Day)", height=600,
+                          template="plotly_white", xaxis_title="Date",
+                          yaxis_title="Price", xaxis_rangeslider_visible=False)
+    st.plotly_chart(fig_cpr, use_container_width=True)
+
+    # ==========================================================
+    # --- CAMARILLA CALCULATION (Full Table, R4 to S4 + Range) ---
     df["Range"] = df["High"] - df["Low"]
+    df["R4"] = df["Close"] + df["Range"] * 1.1 / 2
     df["R3"] = df["Close"] + df["Range"] * 1.1 / 4
+    df["R2"] = df["Close"] + df["Range"] * 1.1 / 6
+    df["R1"] = df["Close"] + df["Range"] * 1.1 / 12
+    df["S1"] = df["Close"] - df["Range"] * 1.1 / 12
+    df["S2"] = df["Close"] - df["Range"] * 1.1 / 6
     df["S3"] = df["Close"] - df["Range"] * 1.1 / 4
-    df["R3"] = df["R3"].shift(1)
-    df["S3"] = df["S3"].shift(1)
+    df["S4"] = df["Close"] - df["Range"] * 1.1 / 2
+
+    # Shift by one day
+    for col in ["R1", "R2", "R3", "R4", "S1", "S2", "S3", "S4"]:
+        df[col] = df[col].shift(1)
 
     rng = last_day_data["High"] - last_day_data["Low"]
+    next_R4 = last_day_data["Close"] + rng * 1.1 / 2
     next_R3 = last_day_data["Close"] + rng * 1.1 / 4
+    next_R2 = last_day_data["Close"] + rng * 1.1 / 6
+    next_R1 = last_day_data["Close"] + rng * 1.1 / 12
+    next_S1 = last_day_data["Close"] - rng * 1.1 / 12
+    next_S2 = last_day_data["Close"] - rng * 1.1 / 6
     next_S3 = last_day_data["Close"] - rng * 1.1 / 4
+    next_S4 = last_day_data["Close"] - rng * 1.1 / 2
 
     next_row = pd.DataFrame({
         "Date": [next_date], "Range": [rng],
-        "R3": [next_R3], "S3": [next_S3]
+        "R4": [next_R4], "R3": [next_R3], "R2": [next_R2], "R1": [next_R1],
+        "S1": [next_S1], "S2": [next_S2], "S3": [next_S3], "S4": [next_S4]
     })
 
-    df_camarilla = pd.concat([df[["Date", "Range", "R3", "S3"]], next_row], ignore_index=True)
+    df_camarilla = pd.concat([df[["Date", "Range", "R4", "R3", "R2", "R1", "S1", "S2", "S3", "S4"]], next_row], ignore_index=True)
 
     # --- Camarilla Table ---
     camarilla_table = pd.DataFrame({
-        "Metric": ["Range", "R3", "S3"],
-        "Value": [rng, next_R3, next_S3]
+        "Metric": ["Range", "R4", "R3", "R2", "R1", "S1", "S2", "S3", "S4"],
+        "Value": [rng, next_R4, next_R3, next_R2, next_R1, next_S1, next_S2, next_S3, next_S4]
     })
 
     def color_camarilla(val, metric):
@@ -155,18 +198,12 @@ else:
         date = row["Date"]
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
         fig_cam.add_trace(go.Scatter(
-            x=[x0, x1],
-            y=[row["R3"], row["R3"]],
-            mode="lines",
-            line=dict(color="red", width=2),
-            name="R3"
+            x=[x0, x1], y=[row["R3"], row["R3"]],
+            mode="lines", line=dict(color="red", width=2), name="R3"
         ))
         fig_cam.add_trace(go.Scatter(
-            x=[x0, x1],
-            y=[row["S3"], row["S3"]],
-            mode="lines",
-            line=dict(color="green", width=2),
-            name="S3"
+            x=[x0, x1], y=[row["S3"], row["S3"]],
+            mode="lines", line=dict(color="green", width=2), name="S3"
         ))
 
     fig_cam.update_layout(title=f"{market_type} Camarilla Levels (R3 & S3 Only)",
