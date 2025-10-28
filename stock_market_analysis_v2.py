@@ -7,8 +7,16 @@ import plotly.graph_objects as go
 st.set_page_config(layout="wide")
 st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR & Camarilla Calculator</h1>", unsafe_allow_html=True)
 
+# ==========================================================
+# --- Market Selection ---
+market_type = st.radio(
+    "Select Market Type:",
+    ["Stock Market", "Bitcoin"],
+    horizontal=True
+)
+
 # --- File uploader ---
-uploaded_file = st.file_uploader("Upload Excel File with Stock Data (Date, High, Low, Close)", type=["xlsx", "xls"])
+uploaded_file = st.file_uploader("Upload Excel File with Data (Date, High, Low, Close)", type=["xlsx", "xls"])
 
 if uploaded_file is None:
     st.info("Please upload an Excel file with columns: Date, High, Low, Close.")
@@ -54,8 +62,12 @@ else:
 
     curr_date = last_day_data["Date"]
     next_day = curr_date + timedelta(days=1)
-    while next_day.weekday() >= 5:
-        next_day += timedelta(days=1)
+
+    # ✅ Skip weekends only for Stock Market
+    if market_type == "Stock Market":
+        while next_day.weekday() >= 5:  # 5=Saturday, 6=Sunday
+            next_day += timedelta(days=1)
+
     next_date = next_day
 
     pivot = next_pivot
@@ -93,33 +105,24 @@ else:
     styled_df = result_df.style.format({"Value": "{:.2f}"}) \
         .apply(lambda col: [color_metrics(v, m) for v, m in zip(result_df["Value"], result_df["Metric"])], axis=0)
 
-    st.subheader(f"📊 CPR Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
+    st.subheader(f"📊 {market_type} CPR Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
 
-        # =================================================================
+    # =================================================================
     # --- Two-day pivot relationship ---
-    # Fix: Use the T-day date and the CPR levels for the T day (calculated from T-1 data)
-    # The T-day levels are found in the 'Pivot', 'BC', 'TC' columns of the LAST ROW (iloc[-1])
-    # The date is the LAST ROW's date (iloc[-1]["Date"])
-    
     df_cpr_ready = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
-    
+
     if len(df_cpr_ready) < 1:
-         st.warning("Not enough data to compute T-day levels for relationship analysis.")
-         # Fallback to display the T+1 table and graph only
-         sentiment, relationship, condition_text = "N/A", "N/A", "N/A"
-         prev_pivot, prev_bc, prev_tc = 0.0, 0.0, 0.0
-         prev_date = curr_date # Use current date as placeholder
+        st.warning("Not enough data to compute T-day levels for relationship analysis.")
+        sentiment, relationship, condition_text = "N/A", "N/A", "N/A"
+        prev_pivot, prev_bc, prev_tc = 0.0, 0.0, 0.0
+        prev_date = curr_date
     else:
-        # T-day levels (calculated from T-1 data, relevant for T day)
-        prev_row_cpr = df_cpr_ready.iloc[-1] 
+        prev_row_cpr = df_cpr_ready.iloc[-1]
         prev_pivot, prev_bc, prev_tc = float(prev_row_cpr["Pivot"]), float(prev_row_cpr["BC"]), float(prev_row_cpr["TC"])
-        prev_date = prev_row_cpr["Date"] # This is T-day's date!
-    
-        # T+1 levels (calculated from T data, relevant for T+1 day)
-        curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc 
-    
-        relationship, sentiment, condition_text = None, None, ""
+        prev_date = prev_row_cpr["Date"]
+
+        curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc
 
         if curr_bc > prev_tc:
             relationship, sentiment = "Higher Value Relationship", "Bullish"
@@ -147,18 +150,13 @@ else:
             condition_text = "N/A"
 
     color_map = {
-        "Bullish": "#16a34a",
-        "Moderately Bullish": "#22c55e",
-        "Bearish": "#dc2626",
-        "Moderately Bearish": "#ef4444",
-        "Sideways/Breakout": "#2563eb",
-        "Sideways": "#3b82f6",
-        "Breakout": "#9333ea",
-        "Neutral": "#9ca3af"
+        "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
+        "Bearish": "#dc2626", "Moderately Bearish": "#ef4444",
+        "Sideways/Breakout": "#2563eb", "Sideways": "#3b82f6",
+        "Breakout": "#9333ea", "Neutral": "#9ca3af"
     }
     sentiment_color = color_map.get(sentiment, "#111827")
 
-    # --- Relationship info box ---
     st.markdown(f"""
         <div style="
             text-align:center;
@@ -172,10 +170,10 @@ else:
             border: 1px solid #d1d5db;
         ">
             <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
-                🧭 Two Day Pivot Relationship Details
+                🧭 {market_type} Two-Day Pivot Relationship
             </div>
             <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
-                {relationship or '—'} →
+                {relationship or '—'} → 
                 <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
             </div>
             <div style="font-size:15px; color:#374151;">
@@ -185,7 +183,6 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
-    # =================================================================
 
     # ==========================================================
     # --- CPR Chart (Historical + Next Day) ---
@@ -202,12 +199,12 @@ else:
         fig_cpr.add_trace(go.Scatter(x=[x0, x1], y=[row["TC"], row["TC"]], mode="lines", line=dict(color="red", width=2), name="TC"))
         fig_cpr.add_trace(go.Scatter(x=[x0, x1], y=[row["Pivot"], row["Pivot"]], mode="lines", line=dict(color="black", dash="dot"), name="Pivot"))
         fig_cpr.add_trace(go.Scatter(x=[x0, x1], y=[row["BC"], row["BC"]], mode="lines", line=dict(color="green", width=2), name="BC"))
-    fig_cpr.update_layout(title="CPR Levels (Historical + Next Day)", height=600, template="plotly_white",
+    fig_cpr.update_layout(title=f"{market_type} CPR Levels (Historical + Next Day)", height=600, template="plotly_white",
                           xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cpr, use_container_width=True)
 
     # ==========================================================
-    # --- CAMARILLA CALCULATION (Historical + Next Day) ---
+    # --- CAMARILLA CALCULATION (same as original) ---
     df["Range"] = df["High"] - df["Low"]
     df["R5"] = (df["High"] / df["Low"]) * df["Close"]
     df["R4"] = df["Close"] + df["Range"] * 1.1 / 2
@@ -237,16 +234,21 @@ else:
 
     next_row = pd.DataFrame({
         "Date": [next_date], "Range": [rng],
-        "R1": [next_R1], "R2": [next_R2], "R3": [next_R3], "R4": [next_R4], "R5": [next_R5],
-        "S1": [next_S1], "S2": [next_S2], "S3": [next_S3], "S4": [next_S4], "S5": [next_S5]
+        "R1": [next_R1], "R2": [next_R2], "R3": [next_R3],
+        "R4": [next_R4], "R5": [next_R5],
+        "S1": [next_S1], "S2": [next_S2], "S3": [next_S3],
+        "S4": [next_S4], "S5": [next_S5]
     })
-    df_camarilla = pd.concat([df[["Date", "Range", "R1", "R2", "R3", "R4", "R5", "S1", "S2", "S3", "S4", "S5"]], next_row], ignore_index=True)
+    df_camarilla = pd.concat([df[["Date", "Range", "R1", "R2", "R3", "R4", "R5",
+                                  "S1", "S2", "S3", "S4", "S5"]], next_row], ignore_index=True)
 
-    # --- Camarilla Table ---
     camarilla_table = pd.DataFrame({
-        "Metric": ["Range", "R5", "R4", "R3", "R2", "R1", "S1", "S2", "S3", "S4", "S5"],
-        "Value": [rng, next_R5, next_R4, next_R3, next_R2, next_R1, next_S1, next_S2, next_S3, next_S4, next_S5]
+        "Metric": ["Range", "R5", "R4", "R3", "R2", "R1",
+                   "S1", "S2", "S3", "S4", "S5"],
+        "Value": [rng, next_R5, next_R4, next_R3, next_R2,
+                  next_R1, next_S1, next_S2, next_S3, next_S4, next_S5]
     })
+
     def color_camarilla(val, metric):
         if "Range" in metric:
             return 'color: blue; font-weight: bold;'
@@ -258,22 +260,18 @@ else:
 
     styled_camarilla = camarilla_table.style.format({"Value": "{:.2f}"}) \
         .apply(lambda col: [color_camarilla(v, m) for v, m in zip(camarilla_table["Value"], camarilla_table["Metric"])], axis=0)
-    st.subheader(f"📊 Camarilla Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
+
+    st.subheader(f"📊 {market_type} Camarilla Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_camarilla, use_container_width=True)
 
-        # ==========================================================
-    # --- CE TWO-DAY RELATIONSHIP (R3 & S3) ---
+    # ==========================================================
+    # --- CE Two-Day Relationship ---
     df_camarilla_ready = df_camarilla.dropna(subset=["R3", "S3"]).copy()
-    if len(df_camarilla_ready) < 2:
-        st.warning("Not enough data for CE two-day relationship.")
-    else:
+    if len(df_camarilla_ready) >= 2:
         prev_row = df_camarilla_ready.iloc[-2]
         curr_row = df_camarilla_ready.iloc[-1]
-
         prev_R3, prev_S3 = prev_row["R3"], prev_row["S3"]
         curr_R3, curr_S3 = curr_row["R3"], curr_row["S3"]
-
-        relationship, sentiment = "N/A", "N/A"
 
         if curr_S3 > prev_R3:
             relationship, sentiment = "CE Higher Value Relationship", "Bullish"
@@ -289,57 +287,62 @@ else:
             relationship, sentiment = "CE Outside Value Relationship", "Sideways"
         elif curr_R3 < prev_R3 and curr_S3 > prev_S3:
             relationship, sentiment = "CE Inside Value Relationship", "Breakout"
+        else:
+            relationship, sentiment = "CE No Clear Relationship", "Neutral"
+    else:
+        relationship, sentiment = "N/A", "N/A"
 
-        color_map = {
-            "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
-            "Bearish": "#dc2626", "Moderately Bearish": "#ef4444",
-            "Sideways/Breakout": "#2563eb", "Sideways": "#3b82f6",
-            "Breakout": "#9333ea", "Neutral": "#9ca3af"
-        }
-        sentiment_color = color_map.get(sentiment, "#111827")
+    color_map_ce = {
+        "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
+        "Bearish": "#dc2626", "Moderately Bearish": "#ef4444",
+        "Sideways/Breakout": "#2563eb", "Sideways": "#3b82f6",
+        "Breakout": "#9333ea", "Neutral": "#9ca3af"
+    }
+    sentiment_color_ce = color_map_ce.get(sentiment, "#111827")
 
-        st.markdown(f"""
-            <div style="text-align:center;font-size:22px;font-weight:bold;background:linear-gradient(145deg,#f0f9ff,#ffffff);
-                padding:22px;border-radius:15px;box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #d1d5db;">
-                <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
-                    🧭 Two-Day Camarilla Relationship
-                </div>
-                <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
-                    {relationship} →
-                    <span style="color:{sentiment_color};font-weight:bold;">{sentiment}</span>
-                </div>
-                <div style="font-size:15px;color:#374151;">
-                    <b>Prev Day:</b> R3={prev_R3:.2f}, S3={prev_S3:.2f} <br>
-                    <b>Current Day:</b> R3={curr_R3:.2f}, S3={curr_S3:.2f}
-                </div>
+    st.markdown(f"""
+        <div style="
+            text-align:center;
+            font-size:22px;
+            font-weight:bold;
+            background: linear-gradient(145deg, #f9fafb, #ffffff);
+            padding:20px;
+            border-radius:15px;
+            box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
+            margin-top:25px;
+            border: 1px solid #d1d5db;
+        ">
+            <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
+                🧭 {market_type} Camarilla Two-Day Relationship
             </div>
-        """, unsafe_allow_html=True)
-
+            <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
+                {relationship or '—'} → 
+                <span style="color:{sentiment_color_ce}; font-weight:bold;">{sentiment or '—'}</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
     # ==========================================================
-    # --- CAMARILLA CHART (Historical + Next Day) ---
-    df_camarilla_ready = df_camarilla.dropna(subset=["R3", "S3"]).copy()
-    selected_days_cam = st.slider("Select number of days to display (Camarilla Levels)", 1, len(df_camarilla_ready) + 1, min(7, len(df_camarilla_ready)) + 1)
-    df_camarilla_plot = df_camarilla_ready.tail(selected_days_cam)
+    # --- Camarilla Chart ---
+    selected_days_cam = st.slider("Select number of days to display (Camarilla Levels)",
+                                  1, len(df_camarilla), min(7, len(df_camarilla)))
+    df_plot_cam = df_camarilla.tail(selected_days_cam)
 
-    fig_camarilla = go.Figure()
-    for _, row in df_camarilla_plot.iterrows():
+    fig_cam = go.Figure()
+    for _, row in df_plot_cam.iterrows():
         date = row["Date"]
-        if pd.notna(row["R3"]) and pd.notna(row["S3"]):
-            x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
-            fig_camarilla.add_trace(go.Scatter(x=[x0, x1], y=[row["R3"], row["R3"]], mode="lines", line=dict(color="red", width=2), name="R3"))
-            fig_camarilla.add_trace(go.Scatter(x=[x0, x1], y=[row["S3"], row["S3"]], mode="lines", line=dict(color="green", width=2), name="S3"))
-
-    fig_camarilla.update_layout(title="Camarilla R3 & S3 Levels (Historical + Next Day)",
-                                height=600, template="plotly_white",
-                                xaxis_title="Date", yaxis_title="Price",
-                                xaxis_rangeslider_visible=False,
-                                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-    st.plotly_chart(fig_camarilla, use_container_width=True)
-
-
-
-
-
-
-
+        x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
+        for level, color in zip(["R4", "R3", "R2", "R1", "S1", "S2", "S3", "S4"],
+                                ["red", "orange", "darkorange", "gold", "lightgreen", "green", "darkgreen", "forestgreen"]):
+            fig_cam.add_trace(go.Scatter(
+                x=[x0, x1],
+                y=[row[level], row[level]],
+                mode="lines",
+                line=dict(color=color, width=2),
+                name=level
+            ))
+    fig_cam.update_layout(title=f"{market_type} Camarilla Levels (Historical + Next Day)",
+                          height=600, template="plotly_white",
+                          xaxis_title="Date", yaxis_title="Price",
+                          xaxis_rangeslider_visible=False)
+    st.plotly_chart(fig_cam, use_container_width=True)
