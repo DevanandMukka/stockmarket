@@ -89,7 +89,7 @@ else:
     s5 = s4 - (s1 - s2)
 
     result_df = pd.DataFrame({
-        "Metric": ["R5", "R4", "R3", "R2", "R1",
+        "Metric": [ "R4", "R3", "R2", "R1",
                    "CPR - Top Central", "Pivot", "CPR - Bottom Central",
                    "S1", "S2", "S3", "S4", "S5"],
         "Value": [r5, r4, r3, r2, r1, tc, pivot, bc, s1, s2, s3, s4, s5]
@@ -332,8 +332,8 @@ else:
     for _, row in df_plot_cam.iterrows():
         date = row["Date"]
         x0, x1 = date - pd.Timedelta(hours=8), date + pd.Timedelta(hours=8)
-        for level, color in zip(["R4", "R3", "R2", "R1", "S1", "S2", "S3", "S4"],
-                                ["red", "orange", "darkorange", "gold", "lightgreen", "green", "darkgreen", "forestgreen"]):
+        for level, color in zip(["R3", "S3"],
+                                ["red",  "green"]):
             fig_cam.add_trace(go.Scatter(
                 x=[x0, x1],
                 y=[row[level], row[level]],
@@ -346,3 +346,4 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
