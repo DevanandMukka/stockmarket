@@ -307,6 +307,8 @@ else:
             relationship, sentiment = "CE Outside Value Relationship", "Sideways"
         elif curr_R3 < prev_R3 and curr_S3 > prev_S3:
             relationship, sentiment = "CE Inside Value Relationship", "Breakout"
+        else :
+            relationship, sentiment = "Not satisfying any of the conditions", "Unknown"
 
         color_map = {
             "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
@@ -359,5 +361,6 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
