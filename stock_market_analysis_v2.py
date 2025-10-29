@@ -291,7 +291,7 @@ else:
         prev_R3, prev_S3 = prev_row["R3"], prev_row["S3"]
         curr_R3, curr_S3 = curr_row["R3"], curr_row["S3"]
 
-        relationship, sentiment = "N/A", "N/A"
+        # relationship, sentiment = "N/A", "N/A"
 
         if curr_S3 > prev_R3:
             relationship, sentiment = "CE Higher Value Relationship", "Bullish"
@@ -359,4 +359,5 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
