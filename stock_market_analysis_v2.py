@@ -168,6 +168,13 @@ else:
         else:
             relationship, sentiment = "No Clear Relationship", "Neutral"
             condition_text = "N/A"
+    # --- Pivot Width Calculations for Current and Next Trading Day ---
+    next_tc_pivot_diff = next_tc - next_pivot
+    next_pivot_bc_diff = next_pivot - next_bc
+    
+    prev_tc_pivot_diff = prev_tc - prev_pivot
+    prev_pivot_bc_diff = prev_pivot - prev_bc
+
 
     color_map = {
         "Bullish": "#16a34a",
@@ -202,7 +209,8 @@ else:
                 <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
             </div>
             <div style="font-size:15px; color:#374151;">
-                <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
+                <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br> <span style="color:#ef4444;">TC - Pivot = {prev_tc_pivot_diff:.2f}</span>,
+                <span style="color:#16a34a;">Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
                 <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
                 <i>Condition satisfied:</i> {condition_text or 'N/A'}
                 {swap_note}
@@ -372,6 +380,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
