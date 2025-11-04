@@ -216,6 +216,7 @@ else:
                 <span style="font-weight:bold; text-decoration:underline;">Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})</span><br>
                 <b>Pivot Levels :</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
                 <b>Pivot Width :</b> TC - Pivot = {next_tc_pivot_diff:.2f}, Pivot - BC = {next_pivot_bc_diff:.2f}<br>                
+                <b> </b> <br>
                 <i>Condition satisfied:</i> {condition_text or 'N/A'}
                 {swap_note}
             </div>
@@ -334,6 +335,11 @@ else:
         else :
             relationship, sentiment = "Not satisfying any of the conditions", "Unknown"
 
+            # --- Pivot Width Calculations for Current and Next Trading Day ---
+        curr_cm_diff = prev_R3 - prev_S3
+        next_cm_diff = curr_R3 - curr_S3
+
+
         color_map = {
             "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
             "Bearish": "#dc2626", "Moderately Bearish": "#ef4444",
@@ -353,8 +359,8 @@ else:
                     <span style="color:{sentiment_color};font-weight:bold;">{sentiment}</span>
                 </div>
                 <div style="font-size:15px;color:#374151;">
-                    <b>Prev Day:</b> R3={prev_R3:.2f}, S3={prev_S3:.2f} <br>
-                    <b>Current Day:</b> R3={curr_R3:.2f}, S3={curr_S3:.2f}
+                    <b>Prev Day:</b> R3={prev_R3:.2f}, S3={prev_S3:.2f}, Pivot Width (R3 - S3) ={curr_cm_diff:.2f} <br>
+                    <b>Current Day:</b> R3={curr_R3:.2f}, S3={curr_S3:.2f}, Pivot Width (R3 - S3) ={next_cm_diff:.2f}
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -385,6 +391,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
