@@ -50,6 +50,13 @@ else:
     mask_swap = df["BC_T_to_T1"] > df["TC_T_to_T1"]
     df.loc[mask_swap, ["TC_T_to_T1", "BC_T_to_T1"]] = df.loc[mask_swap, ["BC_T_to_T1", "TC_T_to_T1"]].values
 
+    # Note flag for swapped BC/TC values
+    swap_note = ""
+    if mask_swap.any():
+        swapped_dates = df.loc[mask_swap, "Date"].dt.strftime("%d-%b-%Y").tolist()
+        swap_note = f"<br><i>Note:</i> BC and TC were swapped on {', '.join(swapped_dates)} due to BC > TC condition."
+
+
     df["Pivot"] = df["Pivot_T_to_T1"].shift(1)
     df["BC"] = df["BC_T_to_T1"].shift(1)
     df["TC"] = df["TC_T_to_T1"].shift(1)
@@ -195,6 +202,7 @@ else:
                 <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
                 <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
                 <i>Condition satisfied:</i> {condition_text or 'N/A'}
+                {swap_note}
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -361,6 +369,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
