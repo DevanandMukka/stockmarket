@@ -201,40 +201,18 @@ else:
             margin-top:25px;
             border: 1px solid #d1d5db;
         ">
-                   <div style="font-size:15px;color:#374151; text-align:left; display:inline-block; margin:auto;">
-            <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')}):</b><br>
-            <div style="display:flex; justify-content:space-between; width:100%; max-width:500px;">
-                <span>TC = {prev_tc:.2f}</span>
-                <span style="color:#ef4444;">TC - Pivot = {prev_tc_pivot_diff:.2f}</span>
+            <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
+                🧭 Two Day Pivot Relationship Details
             </div>
-            <div style="display:flex; justify-content:space-between; width:100%; max-width:500px;">
-                <span>Pivot = {prev_pivot:.2f}</span>
-                <span style="color:#16a34a;">Pivot - BC = {prev_pivot_bc_diff:.2f}</span>
+            <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
+                {relationship or '—'} →
+                <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
             </div>
-            <div style="display:flex; justify-content:space-between; width:100%; max-width:500px;">
-                <span>BC = {prev_bc:.2f}</span>
-                <span>&nbsp;</span>
-            </div>
-            <br>
-
-            <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')}):</b><br>
-            <div style="display:flex; justify-content:space-between; width:100%; max-width:500px;">
-                <span>TC = {next_tc:.2f}</span>
-                <span style="color:#ef4444;">TC - Pivot = {curr_tc_pivot_diff:.2f}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; width:100%; max-width:500px;">
-                <span>Pivot = {next_pivot:.2f}</span>
-                <span style="color:#16a34a;">Pivot - BC = {curr_pivot_bc_diff:.2f}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; width:100%; max-width:500px;">
-                <span>BC = {next_bc:.2f}</span>
-                <span>&nbsp;</span>
-            </div>
-
-            <br>
-            <i>Condition satisfied:</i> {condition_text or 'N/A'}
-            {swap_note}
-
+            <div style="font-size:15px; color:#374151;">
+                <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
+                <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
+                <i>Condition satisfied:</i> {condition_text or 'N/A'}
+                {swap_note}
             </div>
         </div>
     """, unsafe_allow_html=True)
