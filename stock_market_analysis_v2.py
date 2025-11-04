@@ -69,7 +69,7 @@ else:
 
     if next_bc > next_tc:
         next_tc, next_bc = next_bc, next_tc
-        swap_note = f"<br><i>Note:</i> BC and TC were swapped due to BC > TC condition."
+        swap_note = f"<br><span style='color:red;'><i>>⚠️ Note:</i> BC and TC were swapped due to BC > TC condition."
     else:
         swap_note = f"<br><i> </i> "
 
@@ -372,6 +372,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
