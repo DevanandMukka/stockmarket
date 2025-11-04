@@ -209,7 +209,8 @@ else:
                 <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
             </div>
             <div style="font-size:15px; color:#374151;">
-                <b>Details for Current Trading Day ({next_date.strftime('%d-%b-%Y')})</b> <br>
+                # <b>Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})</b> <br>
+                <span style="font-weight:bold; text-decoration:underline;">Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})</span><br>
                 <b>Pivot Levels :</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
                 <b>Pivot Width :</b> TC - Pivot = {prev_tc_pivot_diff:.2f}, Pivot - BC = {prev_pivot_bc_diff:.2f}<br>                
                 <b>Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})</b> <br>
@@ -384,6 +385,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
