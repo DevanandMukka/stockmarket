@@ -210,8 +210,8 @@ else:
             </div>
             <div style="font-size:15px; color:#374151;">
                 <b>Details for Current Trading Day ({next_date.strftime('%d-%b-%Y')}):</b> <br>
-                <b>Current Trading Day ({prev_date.strftime('%d-%b-%Y')} Levels):</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
-                <b>Pivot Width for Current Trading Day ({prev_date.strftime('%d-%b-%Y')} ):</b> TC - Pivot = {prev_tc_pivot_diff:.2f}, Pivot - BC = {prev_pivot_bc_diff:.2f}<br>                
+                <b>Pivot Levels :</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
+                <b>Pivot Width :</b> TC - Pivot = {prev_tc_pivot_diff:.2f}, Pivot - BC = {prev_pivot_bc_diff:.2f}<br>                
                 <b>Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')}):</b> <br>
                 <b>Next Trading Day ({next_date.strftime('%d-%b-%Y')} Levels):</b> TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
                 <b>Pivot Width for Next Trading Day ({prev_date.strftime('%d-%b-%Y')} ):</b> TC - Pivot = {next_tc_pivot_diff:.2f}, Pivot - BC = {next_pivot_bc_diff:.2f}<br>                
@@ -384,6 +384,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
