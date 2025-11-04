@@ -52,9 +52,9 @@ else:
 
     # Note flag for swapped BC/TC values
     swap_note = ""
-    if mask_swap.any():
-        swapped_dates = df.loc[mask_swap, "Date"].dt.strftime("%d-%b-%Y").tolist()
-        swap_note = f"<br><i>Note:</i> BC and TC were swapped on {', '.join(swapped_dates)} due to BC > TC condition."
+    # if mask_swap.any():
+    #     swapped_dates = df.loc[mask_swap, "Date"].dt.strftime("%d-%b-%Y").tolist()
+    #     swap_note = f"<br><i>Note:</i> BC and TC were swapped on {', '.join(swapped_dates)} due to BC > TC condition."
 
 
     df["Pivot"] = df["Pivot_T_to_T1"].shift(1)
@@ -69,6 +69,7 @@ else:
 
     if next_bc > next_tc:
         next_tc, next_bc = next_bc, next_tc
+        swap_note = f"<br><i>Note:</i> BC and TC were swapped due to BC > TC condition."
 
     curr_date = last_day_data["Date"]
     next_day = curr_date + timedelta(days=1)
@@ -369,6 +370,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
