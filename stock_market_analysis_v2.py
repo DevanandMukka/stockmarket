@@ -195,7 +195,6 @@ else:
         <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
             🧭 Two Day Pivot Relationship Details
         </div>
-
         <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
             {relationship or '—'} →
             <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
@@ -398,6 +397,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
