@@ -205,8 +205,8 @@ else:
             <b>Pivot Levels :</b>
             TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
             <b>Pivot Width :</b>
-            TC - Pivot = {prev_tc_pivot_diff:.2f},
-            Pivot - BC = {prev_pivot_bc_diff:.2f}<br><br>
+            <span style="font-weight:bold>TC - Pivot = {prev_tc_pivot_diff:.2f},
+            Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
             <span style="font-weight:bold; text-decoration:underline;">
                 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
             </span><br>
@@ -390,6 +390,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
