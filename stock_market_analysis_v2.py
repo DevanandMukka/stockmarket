@@ -188,80 +188,83 @@ else:
     }
     sentiment_color = color_map.get(sentiment, "#111827")
 
-# --- Relationship info box ---
-    st.markdown(f"""
-        <div style="
-            text-align:center;
-            font-size:22px;
-            font-weight:bold;
-            background: linear-gradient(145deg, #f0f9ff, #ffffff);
-            padding:22px;
-            border-radius:15px;
-            box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
-            margin-top:25px;
-            border: 1px solid #d1d5db;
-        ">
-            <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
-                🧭 Two Day Pivot Relationship Details
-            </div>
-    
-            <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
-                {relationship or '—'} →
-                <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
-            </div>
-    
-            <div style="font-size:17px; color:#1f2937; line-height:1.6; text-align:left; display:inline-block; margin:auto;">
-    
-                <span style="
-                    font-weight:bold; 
-                    text-decoration:underline; 
-                    font-size:19px; 
-                    color:#1E3A8A; 
-                    background-color:#DBEAFE; 
-                    padding:3px 8px; 
-                    border-radius:6px;
-                    display:inline-block;
-                    margin-bottom:5px;">
-                    📅 Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})
-                </span><br>
-    
-                <span style="font-weight:600; color:#374151;">Pivot Levels :</span>
-                <span style="color:#1E40AF;">TC = {prev_tc:.2f}</span>, 
-                <span style="color:#047857;">BC = {prev_bc:.2f}</span>, 
-                <span style="color:#9333EA;">Pivot = {prev_pivot:.2f}</span><br>
-    
-                <span style="font-weight:600; color:#374151;">Pivot Width :</span>
-                <span style="color:#DC2626; font-weight:bold;">TC - Pivot = {prev_tc_pivot_diff:.2f}</span>, 
-                <span style="color:#16A34A; font-weight:bold;">Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
-    
-    
-                <span style="
-                    font-weight:bold; 
-                    text-decoration:underline; 
-                    font-size:19px; 
-                    color:#1E3A8A; 
-                    background-color:#DBEAFE; 
-                    padding:3px 8px; 
-                    border-radius:6px;
-                    display:inline-block;
-                    margin-bottom:5px;">
-                    📅 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
-                </span><br>
-    
-                <span style="font-weight:600; color:#374151;">Pivot Levels :</span>
-                <span style="color:#1E40AF;">TC = {next_tc:.2f}</span>, 
-                <span style="color:#047857;">BC = {next_bc:.2f}</span>, 
-                <span style="color:#9333EA;">Pivot = {next_pivot:.2f}</span><br>
-    
-                <span style="font-weight:600; color:#374151;">Pivot Width :</span>
-                <span style="color:#DC2626; font-weight:bold;">TC - Pivot = {next_tc_pivot_diff:.2f}</span>, 
-                <span style="color:#16A34A; font-weight:bold;">Pivot - BC = {next_pivot_bc_diff:.2f}</span><br><br>
-    
-                <i>Condition satisfied:</i> {condition_text or 'N/A'}
-                {swap_note}
-            </div>
+    # --- Relationship info box ---
+    html_content = f"""
+    <div style="
+        text-align:center;
+        font-size:22px;
+        font-weight:bold;
+        background: linear-gradient(145deg, #f0f9ff, #ffffff);
+        padding:22px;
+        border-radius:15px;
+        box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
+        margin-top:25px;
+        border: 1px solid #d1d5db;
+    ">
+        <div style="font-size:26px; color:#1E40AF; margin-bottom:10px; text-transform:uppercase;">
+            🧭 Two Day Pivot Relationship Details
         </div>
-    """, unsafe_allow_html=True)
+    
+        <div style="font-size:24px; color:#1f2937; margin-bottom:8px;">
+            {relationship or '—'} →
+            <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
+        </div>
+    
+        <div style="font-size:17px; color:#1f2937; line-height:1.6; text-align:left; display:inline-block; margin:auto;">
+    
+            <span style="
+                font-weight:bold; 
+                text-decoration:underline; 
+                font-size:19px; 
+                color:#1E3A8A; 
+                background-color:#DBEAFE; 
+                padding:3px 8px; 
+                border-radius:6px;
+                display:inline-block;
+                margin-bottom:5px;">
+                📅 Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})
+            </span><br>
+    
+            <span style="font-weight:600; color:#374151;">Pivot Levels :</span>
+            <span style="color:#1E40AF;">TC = {prev_tc:.2f}</span>, 
+            <span style="color:#047857;">BC = {prev_bc:.2f}</span>, 
+            <span style="color:#9333EA;">Pivot = {prev_pivot:.2f}</span><br>
+    
+            <span style="font-weight:600; color:#374151;">Pivot Width :</span>
+            <span style="color:#DC2626; font-weight:bold;">TC - Pivot = {prev_tc_pivot_diff:.2f}</span>, 
+            <span style="color:#16A34A; font-weight:bold;">Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
+    
+    
+            <span style="
+                font-weight:bold; 
+                text-decoration:underline; 
+                font-size:19px; 
+                color:#1E3A8A; 
+                background-color:#DBEAFE; 
+                padding:3px 8px; 
+                border-radius:6px;
+                display:inline-block;
+                margin-bottom:5px;">
+                📅 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
+            </span><br>
+    
+            <span style="font-weight:600; color:#374151;">Pivot Levels :</span>
+            <span style="color:#1E40AF;">TC = {next_tc:.2f}</span>, 
+            <span style="color:#047857;">BC = {next_bc:.2f}</span>, 
+            <span style="color:#9333EA;">Pivot = {next_pivot:.2f}</span><br>
+    
+            <span style="font-weight:600; color:#374151;">Pivot Width :</span>
+            <span style="color:#DC2626; font-weight:bold;">TC - Pivot = {next_tc_pivot_diff:.2f}</span>, 
+            <span style="color:#16A34A; font-weight:bold;">Pivot - BC = {next_pivot_bc_diff:.2f}</span><br><br>
+    
+            <i>Condition satisfied:</i> {condition_text or 'N/A'}<br>
+            {swap_note}
+        </div>
+    </div>
+    """
+    
+    # ✅ Render the HTML safely (this is crucial)
+    st.markdown(html_content, unsafe_allow_html=True)
 
 
     # =================================================================
@@ -432,6 +435,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
