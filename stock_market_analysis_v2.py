@@ -379,7 +379,7 @@ else:
                     📅 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
                     </span><br>
                     <span style="font-weight:600;color:#374151;">Details :</span>
-                    <span style="color:#1E40AF;font-size:14px">R3={next_R3:.2f}</span>, 
+                    <span style="color:#1E40AF;font-size:20px">R3={next_R3:.2f}</span>, 
                     <span style="color:#047857;">S3={next_S3:.2f}</span>, 
                     <span style="font-weight:600;color:#374151;">Pivot Width :</span>
                     <span style="color:#DC2626;font-weight:bold;">Pivot Width (R3 - S3) ={next_cm_diff:.2f}</span>
@@ -413,6 +413,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
