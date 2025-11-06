@@ -211,6 +211,11 @@ else:
             <div style="font-size:15px; color:#374151;">
                 <span style="font-weight:bold; text-decoration:underline;">Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})</span><br>
                 <b>Pivot Levels :</b> TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
+
+                <span style="font-weight:600; color:#374151;">Pivot Width :</span>
+                <span style="color:#DC2626; font-weight:bold;">TC - Pivot = {prev_tc_pivot_diff:.2f}</span>, 
+                <span style="color:#16A34A; font-weight:bold;">Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
+
                 <b>Pivot Width :</b> TC - Pivot = {prev_tc_pivot_diff:.2f}, Pivot - BC = {prev_pivot_bc_diff:.2f}<br>                
                 <b> </b> <br>
                 <span style="font-weight:bold; text-decoration:underline;">Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})</span><br>
@@ -391,6 +396,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
