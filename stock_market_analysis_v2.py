@@ -199,14 +199,17 @@ else:
             {relationship or '—'} →
             <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
         </div>
-        <div style="font-size:15px; color:#374151;"><span style="font-weight:bold; text-decoration:underline;">
-                <b>Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})<b>
-            </span><br>
-            <b>Pivot Levels :</b>
-            TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
-            <b>Pivot Width :</b>
-            TC - Pivot = {prev_tc_pivot_diff:.2f},
-            Pivot - BC = {prev_pivot_bc_diff:.2f}<br><br>
+        <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
+        background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
+        📅 Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})
+        </span><br>
+        <span style="font-weight:600;color:#374151;">Pivot Levels :</span>
+        <span style="color:#1E40AF;">TC = {prev_tc:.2f}</span>, 
+        <span style="color:#047857;">BC = {prev_bc:.2f}</span>, 
+        <span style="color:#9333EA;">Pivot = {prev_pivot:.2f}</span><br>
+        <span style="font-weight:600;color:#374151;">Pivot Width :</span>
+        <span style="color:#DC2626;font-weight:bold;">TC - Pivot = {prev_tc_pivot_diff:.2f}</span>, 
+        <span style="color:#16A34A;font-weight:bold;">Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
         <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
             background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
             📅 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
@@ -393,6 +396,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
