@@ -147,7 +147,7 @@ else:
         if curr_bc > prev_tc:
             relationship, sentiment = "Higher Value Relationship", "Bullish"
             condition_text = f"Next Day BC ({curr_bc:.2f}) > Current Day TC ({prev_tc:.2f})"
-        elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
+        elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc < prev_bc:
             relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
             condition_text = f"Next Day TC ({curr_tc:.2f}) > Current Day TC ({prev_tc:.2f}) and BC between ranges"
         elif curr_tc < prev_bc:
@@ -390,6 +390,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
