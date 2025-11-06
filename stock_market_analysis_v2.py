@@ -217,17 +217,14 @@ else:
             Pivot - BC = {next_pivot_bc_diff:.2f}<br><br>
             <i>Condition satisfied:</i> {condition_text or 'N/A'}
             {swap_note}
-
             <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
             background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
             📅 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
-            </span><br>
-            
+            </span><br>          
             <span style="font-weight:600;color:#374151;">Pivot Levels :</span>
             <span style="color:#1E40AF;">TC = {next_tc:.2f}</span>, 
             <span style="color:#047857;">BC = {next_bc:.2f}</span>, 
             <span style="color:#9333EA;">Pivot = {next_pivot:.2f}</span><br>
-            
             <span style="font-weight:600;color:#374151;">Pivot Width :</span>
             <span style="color:#DC2626;font-weight:bold;">TC - Pivot = {next_tc_pivot_diff:.2f}</span>, 
             <span style="color:#16A34A;font-weight:bold;">Pivot - BC = {next_pivot_bc_diff:.2f}</span><br><br>
@@ -405,6 +402,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
