@@ -364,8 +364,6 @@ else:
                     <span style="color:{sentiment_color};font-weight:bold;">{sentiment}</span>
                 </div>
                 <div style="font-size:15px;color:#374151;">
-                    <b>Prev Day:</b> R3={prev_R3:.2f}, S3={prev_S3:.2f}, Pivot Width (R3 - S3) ={curr_cm_diff:.2f} <br>
-                    <b>Current Day:</b> R3={curr_R3:.2f}, S3={curr_S3:.2f}, Pivot Width (R3 - S3) ={next_cm_diff:.2f}
                     <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
                     background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
                     📅 Details for Previous Trading Day ({prev_date.strftime('%d-%b-%Y')})
@@ -415,6 +413,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
