@@ -199,7 +199,6 @@ else:
             {relationship or '—'} →
             <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
         </div>
-
         <div style="font-size:15px; color:#374151;"><span style="font-weight:bold; text-decoration:underline;">
                 <b>Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})<b>
             </span><br>
@@ -397,6 +396,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
