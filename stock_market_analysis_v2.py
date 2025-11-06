@@ -189,66 +189,45 @@ else:
     sentiment_color = color_map.get(sentiment, "#111827")
 
     # --- Relationship info box ---
-        st.markdown(f"""
-        <div style="
-            text-align:center;
-            font-size:22px;
-            font-weight:bold;
-            background: linear-gradient(145deg, #f0f9ff, #ffffff);
-            padding:22px;
-            border-radius:15px;
-            box-shadow: 0px 4px 8px rgba(0,0,0,0.08);
-            margin-top:25px;
-            border: 1px solid #d1d5db;
-        ">
-            <div style="
-                font-size:26px;
-                color:#1E40AF;
-                margin-bottom:10px;
-                text-transform:uppercase;
-            ">
-                🧭 Two Day Pivot Relationship Details
-            </div>
-    
-            <div style="
-                font-size:24px;
-                color:#1f2937;
-                margin-bottom:8px;
-            ">
-                {relationship or '—'} →
-                <span style="color:{sentiment_color}; font-weight:bold;">
-                    {sentiment or '—'}
-                </span>
-            </div>
-    
-            <div style="font-size:15px; color:#374151;">
-                <span style="font-weight:bold; text-decoration:underline;">
-                    Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})
-                </span><br>
-    
-                <b>Pivot Levels :</b>
-                TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
-    
-                <b>Pivot Width :</b>
-                TC - Pivot = {prev_tc_pivot_diff:.2f},
-                Pivot - BC = {prev_pivot_bc_diff:.2f}<br><br>
-    
-                <span style="font-weight:bold; text-decoration:underline;">
-                    Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
-                </span><br>
-    
-                <b>Pivot Levels :</b>
-                TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
-    
-                <b>Pivot Width :</b>
-                TC - Pivot = {next_tc_pivot_diff:.2f},
-                Pivot - BC = {next_pivot_bc_diff:.2f}<br><br>
-    
-                <i>Condition satisfied:</i> {condition_text or 'N/A'}
-                {swap_note}
-            </div>
+    st.markdown(f"""
+        <div style="text-align:center;font-size:22px;font-weight:bold;background: linear-gradient(145deg, #f0f9ff, #ffffff);
+        padding:22px;border-radius:15px;box-shadow: 0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border: 1px solid #d1d5db;">
+        <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
+            🧭 Two Day Pivot Relationship Details
         </div>
-        """, unsafe_allow_html=True)
+
+        <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
+            {relationship or '—'} →
+            <span style="color:{sentiment_color}; font-weight:bold;">{sentiment or '—'}</span>
+        </div>
+
+        <div style="font-size:15px; color:#374151;"><span style="font-weight:bold; text-decoration:underline;">
+                <b>Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})<b>
+            </span><br>
+
+            <b>Pivot Levels :</b>
+            TC = {prev_tc:.2f}, BC = {prev_bc:.2f}, Pivot = {prev_pivot:.2f}<br>
+
+            <b>Pivot Width :</b>
+            TC - Pivot = {prev_tc_pivot_diff:.2f},
+            Pivot - BC = {prev_pivot_bc_diff:.2f}<br><br>
+
+            <span style="font-weight:bold; text-decoration:underline;">
+                Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
+            </span><br>
+
+            <b>Pivot Levels :</b>
+            TC = {next_tc:.2f}, BC = {next_bc:.2f}, Pivot = {next_pivot:.2f}<br>
+
+            <b>Pivot Width :</b>
+            TC - Pivot = {next_tc_pivot_diff:.2f},
+            Pivot - BC = {next_pivot_bc_diff:.2f}<br><br>
+
+            <i>Condition satisfied:</i> {condition_text or 'N/A'}
+            {swap_note}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
     # =================================================================
@@ -419,6 +398,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
