@@ -414,11 +414,15 @@ else:
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
 
-       # ==========================================================
-    # === GOLDEN PIVOT BOX - DISPLAYED AT THE END ===
+    # ============================= GOLDEN PIVOT BOX - ALWAYS SHOW ===
     golden_pivot_html = ""
+    
     # Bearish: TC >= R3 >= BC
-    if curr_tc >= next_R3 >= curr_bc:
+    bearish_golden = curr_tc >= next_R3 >= curr_bc
+    # Bullish: BC <= S3 <= TC
+    bullish_golden = curr_bc <= next_S3 <= curr_tc
+    
+    if bearish_golden:
         golden_pivot_html += f"""
         <div style="background:#fee2e2;border:2px solid #b91c1c;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
         <strong style="color:#b91c1c;font-size:20px;">🌟 GOLDEN PIVOT - Bearish</strong>
@@ -428,8 +432,7 @@ else:
         </div>
         </div>
         """
-    # Bullish: BC <= S3 <= TC
-    if curr_bc <= next_S3 <= curr_tc:
+    if bullish_golden:
         golden_pivot_html += f"""
         <div style="background:#dcfce7;border:2px solid #166534;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
         <strong style="color:#166534;font-size:20px;">🌟 GOLDEN PIVOT - Bullish</strong>
@@ -439,6 +442,15 @@ else:
         </div>
         </div>
         """
-    if golden_pivot_html:
-        st.markdown(golden_pivot_html, unsafe_allow_html=True)
-
+    if not (bearish_golden or bullish_golden):
+        golden_pivot_html += f"""
+        <div style="background:#f3f4f6;border:2px solid #52525b;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
+        <strong style="color:#52525b;font-size:20px;">🌟 GOLDEN PIVOT</strong>
+        <div style="font-size:17px;color:#404040;margin-top:7px;">
+        No condition for golden pivot satisfied.<br>
+        TC = {curr_tc:.2f}, R3 = {next_R3:.2f}, BC = {curr_bc:.2f}, S3 = {next_S3:.2f}
+        </div>
+        </div>
+        """
+    
+    st.markdown(golden_pivot_html, unsafe_allow_html=True)
