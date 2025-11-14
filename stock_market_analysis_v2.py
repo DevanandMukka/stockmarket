@@ -422,18 +422,18 @@ else:
         "Neutral": "#404040"
     }
     
-    if prev_tc >= curr_R3 >= prev_bc:
+    if prev_tc >= prev_R3 >= prev_bc:
         golden_pivot_sentiment = "Bearish"
         golden_pivot_cond = "TC ≥ R3 ≥ BC"
-        golden_pivot_comment = f"(TC ≥ R3 ≥ BC)<br>TC = {prev_tc:.2f}, R3 = {curr_R3:.2f}, BC = {prev_bc:.2f}"
-    elif prev_bc <= curr_S3 <= prev_tc:
+        golden_pivot_comment = f"(TC ≥ R3 ≥ BC)<br>TC = {prev_tc:.2f}, R3 = {prev_R3:.2f}, BC = {prev_bc:.2f}"
+    elif prev_bc <= prev_S3 <= prev_tc:
         golden_pivot_sentiment = "Bullish"
         golden_pivot_cond = "BC ≤ S3 ≤ TC"
-        golden_pivot_comment = f"(BC ≤ S3 ≤ TC)<br>BC = {prev_bc:.2f}, S3 = {curr_S3:.2f}, TC = {prev_tc:.2f}"
+        golden_pivot_comment = f"(BC ≤ S3 ≤ TC)<br>BC = {prev_bc:.2f}, S3 = {prev_S3:.2f}, TC = {prev_tc:.2f}"
     else:
         golden_pivot_sentiment = "Neutral"
         golden_pivot_cond = "No condition"
-        golden_pivot_comment = f"No condition for golden pivot satisfied.<br>TC = {prev_tc:.2f}, R3 = {curr_R3:.2f}, BC = {prev_bc:.2f}, S3 = {curr_S3:.2f}"
+        golden_pivot_comment = f"No condition for golden pivot satisfied.<br>TC = {prev_tc:.2f}, R3 = {prev_R3:.2f}, BC = {prev_bc:.2f}, S3 = {prev_S3:.2f}"
     
     golden_pivot_color = golden_pivot_map.get(golden_pivot_sentiment, "#404040")
     
@@ -456,6 +456,7 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
