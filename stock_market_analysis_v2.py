@@ -329,7 +329,7 @@ else:
             relationship, sentiment = "CE Overlapping Higher Value Relationship", "Moderately Bullish"
         elif curr_R3 < prev_S3:
             relationship, sentiment = "CE Lower Value Relationship", "Bearish"
-        elif curr_R3 > prev_S3 and curr_S3 < prev_S3 and curr_S3 < prev_R3:
+        elif curr_R3 < prev_R3 and curr_S3 < prev_S3 and curr_R3 > prev_S3:
             relationship, sentiment = "CE Overlapping Lower Value Relationship", "Moderately Bearish"
         elif abs(curr_R3 - prev_R3) < 0.05 and abs(curr_S3 - prev_S3) < 0.05:
             relationship, sentiment = "CE Unchanged Value Relationship", "Sideways/Breakout"
@@ -413,6 +413,7 @@ else:
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
+
 
 
 
