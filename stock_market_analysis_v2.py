@@ -415,42 +415,43 @@ else:
     st.plotly_chart(fig_cam, use_container_width=True)
 
     # ============================= GOLDEN PIVOT BOX - ALWAYS SHOW ===
-    golden_pivot_html = ""
+# --- GOLDEN PIVOT BOX with color_map and similar style ---
+    golden_pivot_map = {
+        "Bullish": "#16a34a",
+        "Bearish": "#dc2626",
+        "Neutral": "#404040"
+    }
     
-    # Bearish: TC >= R3 >= BC
-    bearish_golden = curr_tc >= next_R3 >= curr_bc
-    # Bullish: BC <= S3 <= TC
-    bullish_golden = curr_bc <= next_S3 <= curr_tc
+    if curr_tc >= next_R3 >= curr_bc:
+        golden_pivot_sentiment = "Bearish"
+        golden_pivot_cond = "TC ≥ R3 ≥ BC"
+        golden_pivot_comment = f"(TC ≥ R3 ≥ BC)<br>TC = {curr_tc:.2f}, R3 = {next_R3:.2f}, BC = {curr_bc:.2f}"
+    elif curr_bc <= next_S3 <= curr_tc:
+        golden_pivot_sentiment = "Bullish"
+        golden_pivot_cond = "BC ≤ S3 ≤ TC"
+        golden_pivot_comment = f"(BC ≤ S3 ≤ TC)<br>BC = {curr_bc:.2f}, S3 = {next_S3:.2f}, TC = {curr_tc:.2f}"
+    else:
+        golden_pivot_sentiment = "Neutral"
+        golden_pivot_cond = "No condition"
+        golden_pivot_comment = f"No condition for golden pivot satisfied.<br>TC = {curr_tc:.2f}, R3 = {next_R3:.2f}, BC = {curr_bc:.2f}, S3 = {next_S3:.2f}"
     
-    if bearish_golden:
-        golden_pivot_html += f"""
-        <div style="background:#fee2e2;border:2px solid #b91c1c;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
-        <strong style="color:#b91c1c;font-size:20px;">🌟 GOLDEN PIVOT - Bearish</strong>
-        <div style="font-size:17px;color:#991b1b;margin-top:7px;">
-        (TC ≥ R3 ≥ BC)<br>
-        TC = {curr_tc:.2f}, R3 = {next_R3:.2f}, BC = {curr_bc:.2f}
-        </div>
-        </div>
-        """
-    if bullish_golden:
-        golden_pivot_html += f"""
-        <div style="background:#dcfce7;border:2px solid #166534;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
-        <strong style="color:#166534;font-size:20px;">🌟 GOLDEN PIVOT - Bullish</strong>
-        <div style="font-size:17px;color:#14532d;margin-top:7px;">
-        (BC ≤ S3 ≤ TC)<br>
-        BC = {curr_bc:.2f}, S3 = {next_S3:.2f}, TC = {curr_tc:.2f}
-        </div>
-        </div>
-        """
-    if not (bearish_golden or bullish_golden):
-        golden_pivot_html += f"""
-        <div style="background:#f3f4f6;border:2px solid #52525b;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
-        <strong style="color:#52525b;font-size:20px;">🌟 GOLDEN PIVOT</strong>
-        <div style="font-size:17px;color:#404040;margin-top:7px;">
-        No condition for golden pivot satisfied.<br>
-        TC = {curr_tc:.2f}, R3 = {next_R3:.2f}, BC = {curr_bc:.2f}, S3 = {next_S3:.2f}
-        </div>
-        </div>
-        """
+    golden_pivot_color = golden_pivot_map.get(golden_pivot_sentiment, "#404040")
     
-    st.markdown(golden_pivot_html, unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style="text-align:center;font-size:22px;font-weight:bold;
+            background:linear-gradient(145deg,#f0f9ff,#ffffff);padding:22px;border-radius:15px;
+            box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #d1d5db;">
+            <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
+                🌟 Golden Pivot Box
+            </div>
+            <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
+                {golden_pivot_cond} →
+                <span style="color:{golden_pivot_color};font-weight:bold;">{golden_pivot_sentiment}</span>
+            </div>
+            <div style="font-size:17px;color:{golden_pivot_color};margin-top:7px;">
+                {golden_pivot_comment}
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+
