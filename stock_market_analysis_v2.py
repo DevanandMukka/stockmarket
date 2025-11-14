@@ -414,13 +414,30 @@ else:
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
 
-
-
-
-
-
-
-
-
-
-
+       # ==========================================================
+    # === GOLDEN PIVOT BOX - DISPLAYED AT THE END ===
+    golden_pivot_html = ""
+    # Bearish: TC >= R3 >= BC
+    if tc >= next_R3 >= bc:
+        golden_pivot_html += f"""
+        <div style="background:#fee2e2;border:2px solid #b91c1c;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
+        <strong style="color:#b91c1c;font-size:20px;">🌟 GOLDEN PIVOT - Bearish</strong>
+        <div style="font-size:17px;color:#991b1b;margin-top:7px;">
+        (TC ≥ R3 ≥ BC)<br>
+        TC = {tc:.2f}, R3 = {next_R3:.2f}, BC = {bc:.2f}
+        </div>
+        </div>
+        """
+    # Bullish: BC <= S3 <= TC
+    if bc <= next_S3 <= tc:
+        golden_pivot_html += f"""
+        <div style="background:#dcfce7;border:2px solid #166534;padding:18px;border-radius:13px;margin-top:18px;margin-bottom:5px;">
+        <strong style="color:#166534;font-size:20px;">🌟 GOLDEN PIVOT - Bullish</strong>
+        <div style="font-size:17px;color:#14532d;margin-top:7px;">
+        (BC ≤ S3 ≤ TC)<br>
+        BC = {bc:.2f}, S3 = {next_S3:.2f}, TC = {tc:.2f}
+        </div>
+        </div>
+        """
+    if golden_pivot_html:
+        st.markdown(golden_pivot_html, unsafe_allow_html=True)
