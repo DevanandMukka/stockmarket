@@ -475,6 +475,7 @@ else:
                 {bearish_comment if golden_pivot_sentiment == "Bearish" else ""}
                 {bullish_comment if golden_pivot_sentiment == "Bullish" else ""}
             </div>
-        </div>
+        
     """, unsafe_allow_html=True)
+
 
