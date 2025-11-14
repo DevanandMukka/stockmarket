@@ -444,7 +444,7 @@ else:
             <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
                 🌟 Golden Pivot Hot Zone (GPZ)
             </div>
-            <div style="font-size:16px;color:#1E40AF;margin-bottom:10px;">
+            <div style="font-size:20px;color:#047857;margin-bottom:10px;">
                 🌟😇🎵🌟 When this pattern occurs, Oceans are parted and angels sing as you trade
             </div>
             <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
@@ -456,8 +456,4 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
-
-
-
-
 
