@@ -433,7 +433,7 @@ else:
     else:
         golden_pivot_sentiment = "Neutral"
         golden_pivot_cond = "No condition"
-        golden_pivot_comment = f"No condition for golden pivot satisfied.<br>TC = {prev_tc:.2f}, R3 = {curr_R3:.2f}, BC = {prev_bc:.2f}, S3 = {next_S3:.2f}"
+        golden_pivot_comment = f"No condition for golden pivot satisfied.<br>TC = {prev_tc:.2f}, R3 = {curr_R3:.2f}, BC = {prev_bc:.2f}, S3 = {curr_S3:.2f}"
     
     golden_pivot_color = golden_pivot_map.get(golden_pivot_sentiment, "#404040")
     
@@ -456,5 +456,6 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 
