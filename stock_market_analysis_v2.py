@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 # --- App title ---
 st.set_page_config(layout="wide")
-st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR & Camarilla Calculator</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR,  Camarilla & Golden Pivot Zone (GPZ) Calculator</h1>", unsafe_allow_html=True)
 
 # ==========================================================
 # --- Market Selection ---
@@ -471,5 +471,6 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 
