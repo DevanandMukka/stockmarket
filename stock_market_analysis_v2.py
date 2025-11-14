@@ -457,7 +457,7 @@ else:
                 🌟 Golden Pivot Hot Zone (GPZ)
             </div>
             <div style="font-size:20px;color:#16a34a;margin-bottom:10px;">
-                🌟😇🎵🌟 <b>When this pattern occurs, Oceans are parted and Angels sing as you trade</b>
+                🌟😇🎵🌟 <b><i><u>When this pattern occurs, Oceans are parted and Angels sing as you trade</u></i></b>
             </div>
             <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
                 {golden_pivot_cond} →
@@ -472,6 +472,7 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
