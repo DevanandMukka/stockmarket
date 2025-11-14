@@ -412,7 +412,7 @@ else:
     
         first_fact = curr_open < next_bc or curr_open < next_tc
         second_fact = prev_close < prev_bc and prev_close < prev_tc
-        third_fact = next_bc < curr_close
+        third_fact = next_bc > curr_close
     
         bearish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "Sell the rip" opportunity to exist.<br>
@@ -430,7 +430,7 @@ else:
     
         first_fact = curr_open > next_bc or curr_open > next_tc
         second_fact = prev_close > prev_bc and prev_close > prev_tc
-        third_fact = next_tc < curr_close
+        third_fact = next_tc > curr_close
     
         bullish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "buy the dip" opportunity to exist.<br>
@@ -471,4 +471,5 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
