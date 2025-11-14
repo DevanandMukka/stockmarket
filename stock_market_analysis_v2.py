@@ -50,12 +50,7 @@ else:
     mask_swap = df["BC_T_to_T1"] > df["TC_T_to_T1"]
     df.loc[mask_swap, ["TC_T_to_T1", "BC_T_to_T1"]] = df.loc[mask_swap, ["BC_T_to_T1", "TC_T_to_T1"]].values
 
-    # Note flag for swapped BC/TC values
     swap_note = ""
-    # if mask_swap.any():
-    #     swapped_dates = df.loc[mask_swap, "Date"].dt.strftime("%d-%b-%Y").tolist()
-    #     swap_note = f"<br><i>Note:</i> BC and TC were swapped on {', '.join(swapped_dates)} due to BC > TC condition."
-
 
     df["Pivot"] = df["Pivot_T_to_T1"].shift(1)
     df["BC"] = df["BC_T_to_T1"].shift(1)
@@ -119,29 +114,20 @@ else:
     st.subheader(f"📊 {market_type} CPR Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
 
-        # =================================================================
+    # ==========================================================
     # --- Two-day pivot relationship ---
-    # Fix: Use the T-day date and the CPR levels for the T day (calculated from T-1 data)
-    # The T-day levels are found in the 'Pivot', 'BC', 'TC' columns of the LAST ROW (iloc[-1])
-    # The date is the LAST ROW's date (iloc[-1]["Date"])
-    
     df_cpr_ready = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
     
     if len(df_cpr_ready) < 1:
          st.warning("Not enough data to compute T-day levels for relationship analysis.")
-         # Fallback to display the T+1 table and graph only
          sentiment, relationship, condition_text = "N/A", "N/A", "N/A"
          prev_pivot, prev_bc, prev_tc = 0.0, 0.0, 0.0
-         prev_date = curr_date # Use current date as placeholder
+         prev_date = curr_date
     else:
-        # T-day levels (calculated from T-1 data, relevant for T day)
-        prev_row_cpr = df_cpr_ready.iloc[-1] 
+        prev_row_cpr = df_cpr_ready.iloc[-1]
         prev_pivot, prev_bc, prev_tc = float(prev_row_cpr["Pivot"]), float(prev_row_cpr["BC"]), float(prev_row_cpr["TC"])
-        prev_date = prev_row_cpr["Date"] # This is T-day's date!
-    
-        # T+1 levels (calculated from T data, relevant for T+1 day)
+        prev_date = prev_row_cpr["Date"]
         curr_pivot, curr_bc, curr_tc = next_pivot, next_bc, next_tc 
-    
         relationship, sentiment, condition_text = None, None, ""
 
         if curr_bc > prev_tc:
@@ -168,13 +154,11 @@ else:
         else:
             relationship, sentiment = "No Clear Relationship", "Neutral"
             condition_text = "N/A"
-    # --- Pivot Width Calculations for Current and Next Trading Day ---
+
     next_tc_pivot_diff = next_tc - next_pivot
     next_pivot_bc_diff = next_pivot - next_bc
-    
     prev_tc_pivot_diff = prev_tc - prev_pivot
     prev_pivot_bc_diff = prev_pivot - prev_bc
-
 
     color_map = {
         "Bullish": "#16a34a",
@@ -188,7 +172,6 @@ else:
     }
     sentiment_color = color_map.get(sentiment, "#111827")
 
-    # --- Relationship info box ---
     st.markdown(f"""
         <div style="text-align:center;font-size:22px;font-weight:bold;background: linear-gradient(145deg, #f0f9ff, #ffffff);
         padding:22px;border-radius:15px;box-shadow: 0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border: 1px solid #d1d5db;">
@@ -212,7 +195,7 @@ else:
         <span style="color:#16A34A;font-weight:bold;font-size:22px">Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
         <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
             background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
-            📅 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
+            📅 Details for Next Trading Day ({next_date.strftime('%A, %d-%b-%Y')})
             </span><br>          
             <span style="font-weight:600;color:#374151;">Pivot Levels :</span>
             <span style="color:#1E40AF;font-size:22px">TC = {next_tc:.2f}</span>, 
@@ -226,9 +209,6 @@ else:
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-
-    # =================================================================
 
 
     # ==========================================================
@@ -309,7 +289,6 @@ else:
     st.subheader(f"📊 {market_type} Camarilla Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_camarilla, use_container_width=True)
 
-        # ==========================================================
     # --- CE TWO-DAY RELATIONSHIP (R3 & S3) ---
     df_camarilla_ready = df_camarilla.dropna(subset=["R3", "S3"]).copy()
     if len(df_camarilla_ready) < 2:
@@ -320,8 +299,6 @@ else:
 
         prev_R3, prev_S3 = prev_row["R3"], prev_row["S3"]
         curr_R3, curr_S3 = curr_row["R3"], curr_row["S3"]
-
-        # relationship, sentiment = "N/A", "N/A"
 
         if curr_S3 > prev_R3:
             relationship, sentiment = "CE Higher Value Relationship", "Bullish"
@@ -340,10 +317,8 @@ else:
         else :
             relationship, sentiment = "Not satisfying any of the conditions", "Unknown"
 
-            # --- Pivot Width Calculations for Current and Next Trading Day ---
         curr_cm_diff = prev_R3 - prev_S3
         next_cm_diff = curr_R3 - curr_S3
-
 
         color_map = {
             "Bullish": "#16a34a", "Moderately Bullish": "#22c55e",
@@ -376,7 +351,7 @@ else:
                     <br><br><br>
                     <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
                     background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
-                    📅 Details for Next Trading Day ({next_date.strftime('%d-%b-%Y')})
+                    📅 Details for Next Trading Day ({next_date.strftime('%A, %d-%b-%Y')})
                     </span><br>
                     <span style="font-weight:600;color:#374151;">Details :</span>
                     <span style="color:#1E40AF;font-size:22px">R3={next_R3:.2f}</span>, 
@@ -387,12 +362,8 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-
-
-    # ==========================================================
     # --- Camarilla Chart (ONLY R3 and S3) ---
-    selected_days_cam = st.slider("Select number of days to display (Camarilla R3/S3)",
-                                  1, len(df_camarilla), min(7, len(df_camarilla)))
+    selected_days_cam = st.slider("Select number of days to display (Camarilla R3/S3)", 1, len(df_camarilla), min(7, len(df_camarilla)))
     df_plot_cam = df_camarilla.tail(selected_days_cam)
 
     fig_cam = go.Figure()
@@ -414,29 +385,75 @@ else:
                           xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cam, use_container_width=True)
 
-    # ============================= GOLDEN PIVOT BOX - ALWAYS SHOW ===
-# --- GOLDEN PIVOT BOX with color_map and similar style ---
+    # ==========================================================
+    # === GOLDEN PIVOT HOT ZONE (with conditions and comments) ===
     golden_pivot_map = {
         "Bullish": "#16a34a",
         "Bearish": "#dc2626",
         "Neutral": "#404040"
     }
-    
+
+    # Previous day's CPR
+    prev_bc = float(df.iloc[-2]["BC_T_to_T1"])
+    prev_tc = float(df.iloc[-2]["TC_T_to_T1"])
+    prev_close = float(df.iloc[-2]["Close"])
+
+    # Handle Open price (if not present, use Close as fallback)
+    curr_open = last_day_data["Open"] if "Open" in last_day_data else last_day_data["Close"]
+    curr_close = last_day_data["Close"]
+
+    bearish_comment = ""
+    bullish_comment = ""
+
     if next_tc >= next_R3 >= next_bc:
         golden_pivot_sentiment = "Bearish"
         golden_pivot_cond = "TC ≥ R3 ≥ BC"
         golden_pivot_comment = f"(TC ≥ R3 ≥ BC)<br>TC = {next_tc:.2f}, R3 = {next_R3:.2f}, BC = {next_bc:.2f}"
+
+        # 1. Open < range
+        first_fact = curr_open < next_bc or curr_open < next_tc
+        # 2. Previous close < prev CPR
+        second_fact = prev_close < prev_bc and prev_close < prev_tc
+        # 3. Current BC < Current Close
+        third_fact = next_bc < curr_close
+
+        bearish_comment = f"""
+        <b>However, there are a couple of factors that must be in place in order for a "Sell the rip" opportunity to exist.<br>
+        First, price should open the day below the central pivot range.<br>
+        <span style="color:{'#dc2626' if first_fact else '#404040'};">(Open={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
+        Second, the prior session's closing price should fall below the prior day's central pivot range.<br>
+        <span style="color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
+        </b>
+        """
+
     elif next_bc <= next_S3 <= next_tc:
         golden_pivot_sentiment = "Bullish"
         golden_pivot_cond = "BC ≤ S3 ≤ TC"
         golden_pivot_comment = f"(BC ≤ S3 ≤ TC)<br>BC = {next_bc:.2f}, S3 = {next_S3:.2f}, TC = {next_tc:.2f}"
+
+        # 1. Open > range
+        first_fact = curr_open > next_bc or curr_open > next_tc
+        # 2. Previous close > prev CPR
+        second_fact = prev_close > prev_bc and prev_close > prev_tc
+        # 3. Current TC < Current Close
+        third_fact = next_tc < curr_close
+
+        bullish_comment = f"""
+        <b>However, there are a couple of factors that must be in place in order for a "buy the dip" opportunity to exist.<br>
+        First, price should open the day above the central pivot range.<br>
+        <span style="color:{'#16a34a' if first_fact else '#404040'};">(Open={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
+        Second, the prior session's closing price should fall above the prior day's central pivot range.<br>
+        <span style="color:{'#16a34a' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
+        If both of these factors pass the test, the market is likely primed for another "buy the dip" opportunity (reverse for shorts).</b>
+        """
+
     else:
         golden_pivot_sentiment = "Neutral"
         golden_pivot_cond = "No condition"
         golden_pivot_comment = f"No condition for golden pivot satisfied.<br>TC = {next_tc:.2f}, R3 = {next_R3:.2f}, BC = {next_bc:.2f}, S3 = {next_S3:.2f}"
-    
+
     golden_pivot_color = golden_pivot_map.get(golden_pivot_sentiment, "#404040")
-    
+
     st.markdown(f"""
         <div style="text-align:center;font-size:22px;font-weight:bold;
             background:linear-gradient(145deg,#f0f9ff,#ffffff);padding:22px;border-radius:15px;
@@ -454,7 +471,9 @@ else:
             <div style="font-size:17px;color:{golden_pivot_color};margin-top:7px;">
                 {golden_pivot_comment}
             </div>
+            <div style="font-size:17px;color:#404040;margin-top:7px;">
+                {bearish_comment if golden_pivot_sentiment == "Bearish" else ""}
+                {bullish_comment if golden_pivot_sentiment == "Bullish" else ""}
+            </div>
         </div>
     """, unsafe_allow_html=True)
-
-
