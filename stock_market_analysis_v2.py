@@ -418,7 +418,7 @@ else:
         bearish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "Sell the rip" opportunity to exist.<br>
         <b><u>First</u></b>, price should open the day below the central pivot range.<br>
-        <span style="color:{'#dc2626' if first_fact else '#404040'};">(Open={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
+        <span style="color:{'#dc2626' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
         <b><u>Second</u></b>, the prior session's closing price should fall below the prior day's central pivot range.<br>
         <span style="color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
         </b>
