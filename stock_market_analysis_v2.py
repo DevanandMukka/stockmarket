@@ -392,52 +392,46 @@ else:
         "Bearish": "#dc2626",
         "Neutral": "#404040"
     }
-
+    
     # Previous day's CPR
     prev_bc = float(df.iloc[-2]["BC_T_to_T1"])
     prev_tc = float(df.iloc[-2]["TC_T_to_T1"])
     prev_close = float(df.iloc[-2]["Close"])
-
+    
     # Handle Open price (if not present, use Close as fallback)
     curr_open = last_day_data["Open"] if "Open" in last_day_data else last_day_data["Close"]
     curr_close = last_day_data["Close"]
-
+    
     bearish_comment = ""
     bullish_comment = ""
-
+    
     if next_tc >= next_R3 >= next_bc:
         golden_pivot_sentiment = "Bearish"
         golden_pivot_cond = "TC ≥ R3 ≥ BC"
         golden_pivot_comment = f"(TC ≥ R3 ≥ BC)<br>TC = {next_tc:.2f}, R3 = {next_R3:.2f}, BC = {next_bc:.2f}"
-
-        # 1. Open < range
+    
         first_fact = curr_open < next_bc or curr_open < next_tc
-        # 2. Previous close < prev CPR
         second_fact = prev_close < prev_bc and prev_close < prev_tc
-        # 3. Current BC < Current Close
         third_fact = next_bc < curr_close
-
+    
         bearish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "Sell the rip" opportunity to exist.<br>
-        First, price should open the day below the central pivot range.<br>
+        <b><u>First</u></b>, price should open the day below the central pivot range.<br>
         <span style="color:{'#dc2626' if first_fact else '#404040'};">(Open={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
-        Second, the prior session's closing price should fall below the prior day's central pivot range.<br>
+        <b><u>Second</u></b>, the prior session's closing price should fall below the prior day's central pivot range.<br>
         <span style="color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
         </b>
         """
-
+    
     elif next_bc <= next_S3 <= next_tc:
         golden_pivot_sentiment = "Bullish"
         golden_pivot_cond = "BC ≤ S3 ≤ TC"
         golden_pivot_comment = f"(BC ≤ S3 ≤ TC)<br>BC = {next_bc:.2f}, S3 = {next_S3:.2f}, TC = {next_tc:.2f}"
-
-        # 1. Open > range
+    
         first_fact = curr_open > next_bc or curr_open > next_tc
-        # 2. Previous close > prev CPR
         second_fact = prev_close > prev_bc and prev_close > prev_tc
-        # 3. Current TC < Current Close
         third_fact = next_tc < curr_close
-
+    
         bullish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "buy the dip" opportunity to exist.<br>
         <b><u>First</u></b>, price should open the day above the central pivot range.<br>
@@ -446,14 +440,14 @@ else:
         <span style="color:{'#16a34a' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br>
         If both of these factors pass the test, the market is likely primed for another "buy the dip" opportunity (reverse for shorts).</b>
         """
-
+    
     else:
         golden_pivot_sentiment = "Neutral"
         golden_pivot_cond = "No condition"
         golden_pivot_comment = f"No condition for golden pivot satisfied.<br>TC = {next_tc:.2f}, R3 = {next_R3:.2f}, BC = {next_bc:.2f}, S3 = {next_S3:.2f}"
-
+    
     golden_pivot_color = golden_pivot_map.get(golden_pivot_sentiment, "#404040")
-
+    
     st.markdown(f"""
         <div style="text-align:center;font-size:22px;font-weight:bold;
             background:linear-gradient(145deg,#f0f9ff,#ffffff);padding:22px;border-radius:15px;
@@ -477,8 +471,3 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
-
-
-
-
-
