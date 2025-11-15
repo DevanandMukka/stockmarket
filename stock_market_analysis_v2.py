@@ -407,7 +407,7 @@ else:
     bullish_comment = ""
     
     if next_tc >= next_R3 >= next_bc:
-        golden_pivot_sentiment = "Bearish"
+        golden_pivot_sentiment = "Bearish (GPZ)"
         golden_pivot_cond = "TC ≥ R3 ≥ BC"
         golden_pivot_comment = f"(TC ≥ R3 ≥ BC)<br>TC = {next_tc:.2f}, R3 = {next_R3:.2f}, BC = {next_bc:.2f}"
     
@@ -420,12 +420,12 @@ else:
         <b><u>First</u></b>, price should open the day below the central pivot range.<br>
         <span style="color:{'#dc2626' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
         <b><u>Second</u></b>, the prior session's closing price should fall below the prior day's central pivot range.<br>
-        <span style="color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
+        <span style="font-size:20px; color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
         </b>
         """
     
     elif next_bc <= next_S3 <= next_tc:
-        golden_pivot_sentiment = "Bullish"
+        golden_pivot_sentiment = "Bullish (GPZ)"
         golden_pivot_cond = "BC ≤ S3 ≤ TC"
         golden_pivot_comment = f"(BC ≤ S3 ≤ TC)<br>BC = {next_bc:.2f}, S3 = {next_S3:.2f}, TC = {next_tc:.2f}"
     
@@ -438,7 +438,7 @@ else:
         <b><u>First</u></b>, price should open the day above the central pivot range.<br>
         <span style="color:{'#16a34a' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
         <b><u>Second</u></b>, the prior session's closing price should fall above the prior day's central pivot range.<br>
-        <span style="color:{'#16a34a' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br><br>
+        <span style="font-size:20px; color:{'#16a34a' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br><br>
         If both of these factors pass the test, the market is likely primed for another "buy the dip" opportunity (reverse for shorts).</b>
         """
     
@@ -472,6 +472,7 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
