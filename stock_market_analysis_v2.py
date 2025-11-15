@@ -420,7 +420,7 @@ else:
         <b><u>First</u></b>, price should open the day below the central pivot range.<br>
         <span style="color:{'#dc2626' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
         <b><u>Second</u></b>, the prior session's closing price should fall below the prior day's central pivot range.<br>
-        <span style="font-size:20px; color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
+        <span style="font-size:24px; color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
         </b>
         """
     
@@ -438,7 +438,7 @@ else:
         <b><u>First</u></b>, price should open the day above the central pivot range.<br>
         <span style="color:{'#16a34a' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
         <b><u>Second</u></b>, the prior session's closing price should fall above the prior day's central pivot range.<br>
-        <span style="font-size:20px; color:{'#16a34a' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br><br>
+        <span style="font-size:24px; color:{'#16a34a' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br><br>
         If both of these factors pass the test, the market is likely primed for another "buy the dip" opportunity (reverse for shorts).</b>
         """
     
@@ -472,8 +472,4 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
-
-
-
-
 
