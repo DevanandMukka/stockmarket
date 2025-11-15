@@ -431,14 +431,14 @@ else:
     
         first_fact = curr_open > next_bc or curr_open > next_tc
         second_fact = prev_close > prev_bc and prev_close > prev_tc
-        third_fact = next_tc > curr_close
+        third_fact = next_tc < curr_close
     
         bullish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "buy the dip" opportunity to exist.<br>
         <b><u>First</u></b>, price should open the day above the central pivot range.<br>
         <span style="color:{'#16a34a' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
         <b><u>Second</u></b>, the prior session's closing price should fall above the prior day's central pivot range.<br>
-        <span style="color:{ if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br><br>
+        <span style="color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br><br>
         If both of these factors pass the test, the market is likely primed for another "buy the dip" opportunity (reverse for shorts).</b>
         """
     
@@ -472,6 +472,7 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
