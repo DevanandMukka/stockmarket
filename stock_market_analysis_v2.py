@@ -10,18 +10,34 @@ st.markdown("<div style='text-align: center; color: #16a34a; font-size:32px; fon
 
 # ==========================================================
 # --- Market Selection ---
-market_type = st.radio(
-    "Select Market Type:",
-    ["Stock Market", "Bitcoin"],
-    horizontal=True
-)
+# market_type = st.radio(
+#     "Select Market Type:",
+#     ["Stock Market", "Bitcoin"],
+#     horizontal=True
+# )
 
-# --- Data Frequency Selection ---
-data_freq = st.radio(
-    "Select Data Frequency:",
-    ["Daily", "Weekly", "Monthly"],
-    horizontal=False
-)
+# # --- Data Frequency Selection ---
+# data_freq = st.radio(
+#     "Select Data Frequency:",
+#     ["Daily", "Weekly", "Monthly"],
+#     horizontal=False
+# )
+
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    market_type = st.radio(
+        "Select Market Type:",
+        ["Stock Market", "Bitcoin"],
+        horizontal=True
+    )
+with col2:
+    data_freq = st.radio(
+        "Select Data Frequency:",
+        ["Daily", "Weekly", "Monthly"],
+        horizontal=True
+    )
+
 
 # --- File uploader ---
 uploaded_file = st.file_uploader("Upload Excel File with Data (Date, High, Low, Close)", type=["xlsx", "xls"])
@@ -494,5 +510,6 @@ else:
                 {bullish_comment if golden_pivot_sentiment == "Bullish (GPZ)" else ""}
             
     """, unsafe_allow_html=True)
+
 
 
