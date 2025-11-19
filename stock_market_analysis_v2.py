@@ -20,7 +20,7 @@ market_type = st.radio(
 data_freq = st.radio(
     "Select Data Frequency:",
     ["Daily", "Weekly", "Monthly"],
-    horizontal=True
+    horizontal=False
 )
 
 # --- File uploader ---
@@ -494,4 +494,5 @@ else:
                 {bullish_comment if golden_pivot_sentiment == "Bullish (GPZ)" else ""}
             
     """, unsafe_allow_html=True)
+
 
