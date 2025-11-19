@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 # --- App title ---
 st.set_page_config(layout="wide")
-st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR,  Camarilla & Golden Pivot Zone (GPZ) Calculator</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #2F4F4F;'>📊 Sunil's CPR, Camarilla & Golden Pivot Zone (GPZ) Calculator</h1>", unsafe_allow_html=True)
 st.markdown("<div style='text-align: center; color: #16a34a; font-size:32px; font-weight:600; margin-bottom:18px;'><b><i>Plan the trade ; Trade the plan</i></b></div>", unsafe_allow_html=True)
 
 # ==========================================================
@@ -13,6 +13,13 @@ st.markdown("<div style='text-align: center; color: #16a34a; font-size:32px; fon
 market_type = st.radio(
     "Select Market Type:",
     ["Stock Market", "Bitcoin"],
+    horizontal=True
+)
+
+# --- Data Frequency Selection ---
+data_freq = st.radio(
+    "Select Data Frequency:",
+    ["Daily", "Weekly", "Monthly"],
     horizontal=True
 )
 
@@ -33,13 +40,32 @@ else:
         st.error(f"Excel file must contain columns: {required_cols}")
         st.stop()
 
-    # --- Data Prep ---
     df = df.sort_values("Date").reset_index(drop=True)
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
     df = df.dropna(subset=["Date"])
     if len(df) < 2:
         st.warning("Need at least 2 trading days in the file.")
         st.stop()
+
+    # ==========================================================
+    # --- Resample for Weekly / Monthly ---
+    if data_freq == "Weekly":
+        # Resample to Friday for week ending OHLC
+        df = (df.set_index("Date")
+                .resample('W-FRI')
+                .agg({'High':'max', 'Low':'min', 'Close':'last'})
+                .reset_index())
+        df["NextDate"] = df["Date"] + pd.offsets.Week(weekday=0)  # Next Monday
+    elif data_freq == "Monthly":
+        # Resample to month end for monthly OHLC
+        df = (df.set_index("Date")
+                .resample('M')
+                .agg({'High':'max', 'Low':'min', 'Close':'last'})
+                .reset_index())
+        df["NextDate"] = df["Date"] + pd.offsets.MonthBegin(1)   # First day next month
+    else:
+        # Daily calculation — untouched
+        df["NextDate"] = df["Date"] + timedelta(days=1)
 
     # ==========================================================
     # --- CPR CALCULATION ---
@@ -70,11 +96,10 @@ else:
         swap_note = f"<br><i> </i> "
 
     curr_date = last_day_data["Date"]
-    next_day = curr_date + timedelta(days=1)
-    if market_type == "Stock Market":
-        while next_day.weekday() >= 5:
-            next_day += timedelta(days=1)
-    next_date = next_day
+    next_date = last_day_data["NextDate"]
+    if market_type == "Stock Market" and data_freq == "Daily":
+        while next_date.weekday() >= 5:
+            next_date += timedelta(days=1)
 
     # --- CPR R/S Levels ---
     high = last_day_data["High"]
@@ -211,7 +236,6 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-
     # ==========================================================
     # --- CPR CHART ---
     df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
@@ -236,7 +260,7 @@ else:
     st.plotly_chart(fig_cpr, use_container_width=True)
 
     # ==========================================================
-    # --- CAMARILLA CALCULATION (Full Table, R4 to S4 + Range) ---
+    # --- CAMARILLA CALCULATION ---
     df["Range"] = df["High"] - df["Low"]
     df["R4"] = df["Close"] + df["Range"] * 1.1 / 2
     df["R3"] = df["Close"] + df["Range"] * 1.1 / 4
@@ -247,7 +271,6 @@ else:
     df["S3"] = df["Close"] - df["Range"] * 1.1 / 4
     df["S4"] = df["Close"] - df["Range"] * 1.1 / 2
 
-    # Shift by one day
     for col in ["R1", "R2", "R3", "R4", "S1", "S2", "S3", "S4"]:
         df[col] = df[col].shift(1)
 
@@ -457,7 +480,7 @@ else:
                 🌟 Golden Pivot Hot Zone (GPZ)
             </div>
             <div style="font-size:20px;color:#16a34a;margin-bottom:10px;">
-                🌟😇🎵🌟 <b><i>When this pattern occurs, Oceans are parted and Angels sing as you trade</i></b>
+                <b><i>🌟😇🎵🌟 When this pattern occurs, Oceans are parted and Angels sing as you trade</i></b>
             </div>
             <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
                 {golden_pivot_cond} →
@@ -469,9 +492,6 @@ else:
             <div style="font-size:17px;color:#404040;margin-top:7px;">
                 {bearish_comment if golden_pivot_sentiment == "Bearish (GPZ)" else ""}
                 {bullish_comment if golden_pivot_sentiment == "Bullish (GPZ)" else ""}
-            
-        
+            </div>
+        </div>
     """, unsafe_allow_html=True)
-
-
-
