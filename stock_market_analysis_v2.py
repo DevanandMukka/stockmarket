@@ -10,64 +10,21 @@ st.markdown("<div style='text-align: center; color: #16a34a; font-size:32px; fon
 
 # ==========================================================
 # --- Market Selection ---
-# col1, col2 = st.columns([1, 1])
-
-# with col1:
-#     market_type = st.radio(
-#         "Select Market Type:",
-#         ["Stock Market", "Bitcoin"],
-#         horizontal=True
-#     )
-# with col2:
-#     data_freq = st.radio(
-#         "Select Data Frequency:",
-#         ["Daily", "Weekly", "Monthly"],
-#         horizontal=True
-#     )
-
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    st.markdown(
-        """
-        <style>
-        .market-type .stRadio > div {
-            background-color: #f0f9ff;  /* light blue background */
-            border: 2px solid #3b82f6; /* blue border */
-            border-radius: 8px;
-            padding: 10px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    with st.container():
-        st.markdown('<div class="market-type">', unsafe_allow_html=True)
-        market_type = st.radio(
-            "Select Market Type:",
-            ["Stock Market", "Bitcoin"],
-            horizontal=True
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-
+    market_type = st.radio(
+        "Select Market Type:",
+        ["Stock Market", "Bitcoin"],
+        horizontal=True
+    )
 with col2:
-    st.markdown(
-        """
-        <style>
-        .data-freq .stRadio > div {
-            background-color: #ddf6e4;  /* light green background */
-            border: 2px solid #22c55e; /* green border */
-            border-radius: 8px;
-            padding: 10px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    with st.container():
-        st.markdown('<div class="data-freq">', unsafe_allow_html=True)
-        data_freq = st.radio(
-            "Select Data Frequency:",
-            ["Daily", "Weekly", "Monthly"],
-            horizontal=True
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+    data_freq = st.radio(
+        "Select Data Frequency:",
+        ["Daily", "Weekly", "Monthly"],
+        horizontal=True
+    )
+
 
 
 # --- File uploader ---
@@ -541,6 +498,7 @@ else:
                 {bullish_comment if golden_pivot_sentiment == "Bullish (GPZ)" else ""}
             
     """, unsafe_allow_html=True)
+
 
 
 
