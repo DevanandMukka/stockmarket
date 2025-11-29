@@ -25,6 +25,20 @@ with col2:
         horizontal=True
     )
 
+# label to use everywhere instead of hardcoded "Day"
+if data_freq == "Daily":
+    next_period_label = "next trading day"
+    current_period_label = "Current Trading Day"
+    prev_period_label = "Previous Trading Day"
+elif data_freq == "Weekly":
+    next_period_label = "next trading week"
+    current_period_label = "Current Trading Week"
+    prev_period_label = "Previous Trading Week"
+else:
+    next_period_label = "next trading month"
+    current_period_label = "Current Trading Month"
+    prev_period_label = "Previous Trading Month"
+
 # --- File uploader ---
 uploaded_file = st.file_uploader("Upload Excel File with Data (Date, High, Low, Close)", type=["xlsx", "xls"])
 
@@ -139,7 +153,7 @@ else:
     styled_df = result_df.style.format({"Value": "{:.2f}"}) \
         .apply(lambda col: [color_metrics(v, m) for v, m in zip(result_df["Value"], result_df["Metric"])], axis=0)
 
-    st.subheader(f"📊 {market_type} CPR Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
+    st.subheader(f"📊 {market_type} CPR Levels for {next_period_label} ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_df, use_container_width=True)
 
     # ==========================================================
@@ -160,25 +174,25 @@ else:
 
         if curr_bc > prev_tc:
             relationship, sentiment = "Higher Value Relationship", "Bullish"
-            condition_text = f"Next Day BC ({curr_bc:.2f}) > Current Day TC ({prev_tc:.2f})"
+            condition_text = f"Next {data_freq[:-2]} BC ({curr_bc:.2f}) > Current {data_freq[:-2]} TC ({prev_tc:.2f})"
         elif curr_tc > prev_tc and curr_bc < prev_tc and curr_bc > prev_bc:
             relationship, sentiment = "Overlapping Higher Value Relationship", "Moderately Bullish"
-            condition_text = f"Next Day TC ({curr_tc:.2f}) > Current Day TC ({prev_tc:.2f}) and BC between ranges"
+            condition_text = f"Next {data_freq[:-2]} TC ({curr_tc:.2f}) > Current {data_freq[:-2]} TC ({prev_tc:.2f}) and BC between ranges"
         elif curr_tc < prev_bc:
             relationship, sentiment = "Lower Value Relationship", "Bearish"
-            condition_text = f"Next Day TC ({curr_tc:.2f}) < Current Day BC ({prev_bc:.2f})"
+            condition_text = f"Next {data_freq[:-2]} TC ({curr_tc:.2f}) < Current {data_freq[:-2]} BC ({prev_bc:.2f})"
         elif curr_tc > prev_bc and curr_tc < prev_tc:
             relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
-            condition_text = f"Next Day BC ({curr_bc:.2f}) < Current Day BC ({prev_bc:.2f}) and TC > Current Day BC"
+            condition_text = f"Next {data_freq[:-2]} BC ({curr_bc:.2f}) < Current {data_freq[:-2]} BC ({prev_bc:.2f}) and TC > Current {data_freq[:-2]} BC"
         elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
             relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
-            condition_text = f"Next Day and Current Day CPRs nearly equal"
+            condition_text = f"Next and Current {data_freq.lower()} CPRs nearly equal"
         elif curr_tc > prev_tc and curr_bc < prev_bc:
             relationship, sentiment = "Outside Value Relationship", "Sideways"
-            condition_text = f"Next Day range fully engulfs Current Day range"
+            condition_text = f"Next {data_freq.lower()} range fully engulfs Current {data_freq.lower()} range"
         elif curr_tc < prev_tc and curr_bc > prev_bc:
             relationship, sentiment = "Inside Value Relationship", "Breakout"
-            condition_text = f"Next Day range inside Current Day range"
+            condition_text = f"Next {data_freq.lower()} range inside Current {data_freq.lower()} range"
         else:
             relationship, sentiment = "No Clear Relationship", "Neutral"
             condition_text = "N/A"
@@ -204,7 +218,7 @@ else:
         <div style="text-align:center;font-size:22px;font-weight:bold;background: linear-gradient(145deg, #f0f9ff, #ffffff);
         padding:22px;border-radius:15px;box-shadow: 0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border: 1px solid #d1d5db;">
         <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
-            🧭 Two Day Pivot Relationship Details
+            🧭 Two {data_freq} Pivot Relationship Details
         </div>
         <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
             {relationship or '—'} →
@@ -212,7 +226,7 @@ else:
         </div>
         <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
         background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
-        📅 Details for Current Trading Day ({prev_date.strftime('%d-%b-%Y')})
+        📅 Details for {current_period_label} ({prev_date.strftime('%d-%b-%Y')})
         </span><br>
         <span style="font-weight:600;color:#374151;">Pivot Levels :</span>
         <span style="color:#1E40AF;font-size:22px">TC = {prev_tc:.2f}</span>, 
@@ -223,7 +237,7 @@ else:
         <span style="color:#16A34A;font-weight:bold;font-size:22px">Pivot - BC = {prev_pivot_bc_diff:.2f}</span><br><br>
         <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
             background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
-            📅 Details for Next Trading Day ({next_date.strftime('%A, %d-%b-%Y')})
+            📅 Details for {next_period_label.capitalize()} ({next_date.strftime('%A, %d-%b-%Y')})
             </span><br>          
             <span style="font-weight:600;color:#374151;">Pivot Levels :</span>
             <span style="color:#1E40AF;font-size:22px">TC = {next_tc:.2f}</span>, 
@@ -241,7 +255,7 @@ else:
     # ==========================================================
     # --- CPR CHART ---
     df_trading = df.dropna(subset=["Pivot", "BC", "TC"]).copy()
-    selected_days_cpr = st.slider("Select number of days to display (CPR Levels)", 1, len(df_trading) + 1, min(7, len(df_trading)) + 1)
+    selected_days_cpr = st.slider("Select number of periods to display (CPR Levels)", 1, len(df_trading) + 1, min(7, len(df_trading)) + 1)
     df_plot_historical = df_trading.tail(selected_days_cpr - 1).copy()
     next_day_row = pd.DataFrame({"Date": [next_date], "Pivot": [next_pivot], "BC": [next_bc], "TC": [next_tc]})
     df_plot = pd.concat([df_plot_historical[["Date", "Pivot", "BC", "TC"]], next_day_row], ignore_index=True)
@@ -256,7 +270,7 @@ else:
                                      mode="lines", line=dict(color="black", dash="dot"), name="Pivot"))
         fig_cpr.add_trace(go.Scatter(x=[x0, x1], y=[row["BC"], row["BC"]],
                                      mode="lines", line=dict(color="green", width=2), name="BC"))
-    fig_cpr.update_layout(title="CPR Levels (Historical + Next Day)", height=600,
+    fig_cpr.update_layout(title=f"CPR Levels (Historical + {next_period_label.capitalize()})", height=600,
                           template="plotly_white", xaxis_title="Date",
                           yaxis_title="Price", xaxis_rangeslider_visible=False)
     st.plotly_chart(fig_cpr, use_container_width=True)
@@ -312,13 +326,13 @@ else:
     styled_camarilla = camarilla_table.style.format({"Value": "{:.2f}"}) \
         .apply(lambda col: [color_camarilla(v, m) for v, m in zip(camarilla_table["Value"], camarilla_table["Metric"])], axis=0)
 
-    st.subheader(f"📊 {market_type} Camarilla Levels for next day ({next_date.strftime('%A, %d-%b-%Y')})")
+    st.subheader(f"📊 {market_type} Camarilla Levels for {next_period_label} ({next_date.strftime('%A, %d-%b-%Y')})")
     st.dataframe(styled_camarilla, use_container_width=True)
 
     # --- CE TWO-DAY RELATIONSHIP (R3 & S3) ---
     df_camarilla_ready = df_camarilla.dropna(subset=["R3", "S3"]).copy()
     if len(df_camarilla_ready) < 2:
-        st.warning("Not enough data for CE two-day relationship.")
+        st.warning("Not enough data for CE two-period relationship.")
     else:
         prev_row = df_camarilla_ready.iloc[-2]
         curr_row = df_camarilla_ready.iloc[-1]
@@ -327,19 +341,19 @@ else:
         curr_R3, curr_S3 = curr_row["R3"], curr_row["S3"]
 
         if curr_S3 > prev_R3:
-            relationship, sentiment = "CE Higher Value Relationship", "Bullish"
+            relationship, sentiment = f"CE Higher Value {data_freq} Relationship", "Bullish"
         elif curr_R3 > prev_R3 and curr_S3 < prev_R3 and curr_S3 > prev_S3:
-            relationship, sentiment = "CE Overlapping Higher Value Relationship", "Moderately Bullish"
+            relationship, sentiment = f"CE Overlapping Higher Value {data_freq} Relationship", "Moderately Bullish"
         elif curr_R3 < prev_S3:
-            relationship, sentiment = "CE Lower Value Relationship", "Bearish"
+            relationship, sentiment = f"CE Lower Value {data_freq} Relationship", "Bearish"
         elif curr_R3 < prev_R3 and curr_S3 < prev_S3 and curr_R3 > prev_S3:
-            relationship, sentiment = "CE Overlapping Lower Value Relationship", "Moderately Bearish"
+            relationship, sentiment = f"CE Overlapping Lower Value {data_freq} Relationship", "Moderately Bearish"
         elif abs(curr_R3 - prev_R3) < 0.05 and abs(curr_S3 - prev_S3) < 0.05:
-            relationship, sentiment = "CE Unchanged Value Relationship", "Sideways/Breakout"
+            relationship, sentiment = f"CE Unchanged Value {data_freq} Relationship", "Sideways/Breakout"
         elif curr_R3 > prev_R3 and curr_S3 < prev_S3:
-            relationship, sentiment = "CE Outside Value Relationship", "Sideways"
+            relationship, sentiment = f"CE Outside Value {data_freq} Relationship", "Sideways"
         elif curr_R3 < prev_R3 and curr_S3 > prev_S3:
-            relationship, sentiment = "CE Inside Value Relationship", "Breakout"
+            relationship, sentiment = f"CE Inside Value {data_freq} Relationship", "Breakout"
         else :
             relationship, sentiment = "Not satisfying any of the conditions", "Unknown"
 
@@ -358,7 +372,7 @@ else:
             <div style="text-align:center;font-size:22px;font-weight:bold;background:linear-gradient(145deg,#f0f9ff,#ffffff);
                 padding:22px;border-radius:15px;box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #d1d5db;">
                 <div style="font-size:26px;color:#1E40AF;margin-bottom:10px;text-transform:uppercase;">
-                    🎯 Two-Day Camarilla Relationship
+                    🎯 Two-{data_freq} Camarilla Relationship
                 </div>
                 <div style="font-size:24px;color:#1f2937;margin-bottom:8px;">
                     {relationship} →
@@ -367,29 +381,29 @@ else:
                 <div style="font-size:15px;color:#374151;">
                     <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
                     background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
-                    📅 Details for Previous Trading Day ({prev_date.strftime('%d-%b-%Y')})
+                    📅 Details for {prev_period_label} ({prev_date.strftime('%d-%b-%Y')})
                     </span><br>
-                    <span style="font-weight:600;color:#374151;">Prev Day :</span>
+                    <span style="font-weight:600;color:#374151;">Prev :</span>
                     <span style="color:#1E40AF;font-size:22px">R3={prev_R3:.2f}</span>, 
                     <span style="color:#047857;font-size:22px">S3={prev_S3:.2f}</span>, 
                     <span style="font-weight:600;color:#374151;">Pivot Width :</span>
-                    <span style="color:#DC2626;font-weight:bold;font-size:22px">Pivot Width (R3 - S3) ={curr_cm_diff:.2f}</span>
+                    <span style="color:#DC2626;font-weight:bold;font-size:22px">Width (R3 - S3) ={curr_cm_diff:.2f}</span>
                     <br><br><br>
                     <span style="font-weight:bold;text-decoration:underline;font-size:19px;color:#1E3A8A;
                     background-color:#DBEAFE;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:5px;">
-                    📅 Details for Next Trading Day ({next_date.strftime('%A, %d-%b-%Y')})
+                    📅 Details for {next_period_label.capitalize()} ({next_date.strftime('%A, %d-%b-%Y')})
                     </span><br>
                     <span style="font-weight:600;color:#374151;">Details :</span>
                     <span style="color:#1E40AF;font-size:22px">R3={next_R3:.2f}</span>, 
                     <span style="color:#047857;font-size:22px">S3={next_S3:.2f}</span>, 
                     <span style="font-weight:600;color:#374151;">Pivot Width :</span>
-                    <span style="color:#DC2626;font-weight:bold;font-size:22px">Pivot Width (R3 - S3) ={next_cm_diff:.2f}</span>
+                    <span style="color:#DC2626;font-weight:bold;font-size:22px">Width (R3 - S3) ={next_cm_diff:.2f}</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
     # --- Camarilla Chart (ONLY R3 and S3) ---
-    selected_days_cam = st.slider("Select number of days to display (Camarilla R3/S3)", 1, len(df_camarilla), min(7, len(df_camarilla)))
+    selected_days_cam = st.slider(f"Select number of periods to display (Camarilla R3/S3)", 1, len(df_camarilla), min(7, len(df_camarilla)))
     df_plot_cam = df_camarilla.tail(selected_days_cam)
 
     fig_cam = go.Figure()
@@ -405,7 +419,7 @@ else:
             mode="lines", line=dict(color="green", width=2), name="S3"
         ))
 
-    fig_cam.update_layout(title=f"{market_type} Camarilla Levels (R3 & S3 Only)",
+    fig_cam.update_layout(title=f"{market_type} Camarilla Levels (R3 & S3 Only)", 
                           height=600, template="plotly_white",
                           xaxis_title="Date", yaxis_title="Price",
                           xaxis_rangeslider_visible=False)
@@ -419,7 +433,7 @@ else:
         "Neutral": "#404040"
     }
     
-    # Previous day's CPR
+    # Previous period's CPR
     prev_bc = float(df.iloc[-2]["BC_T_to_T1"])
     prev_tc = float(df.iloc[-2]["TC_T_to_T1"])
     prev_close = float(df.iloc[-2]["Close"])
@@ -442,9 +456,9 @@ else:
     
         bearish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "Sell the rip" opportunity to exist.<br>
-        <b><u>First</u></b>, price should open the day below the central pivot range.<br>
+        <b><u>First</u></b>, price should open the {data_freq[:-2].lower()} below the central pivot range.<br>
         <span style="color:{'#dc2626' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
-        <b><u>Second</u></b>, the prior session's closing price should fall below the prior day's central pivot range.<br>
+        <b><u>Second</u></b>, the prior {data_freq[:-2].lower()}'s closing price should fall below the prior {data_freq[:-2].lower()}'s central pivot range.<br>
         <span style="font-size:24px; color:{'#dc2626' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span>
         </b>
         """
@@ -460,9 +474,9 @@ else:
     
         bullish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "buy the dip" opportunity to exist.<br>
-        <b><u>First</u></b>, price should open the day above the central pivot range.<br>
+        <b><u>First</u></b>, price should open the {data_freq[:-2].lower()} above the central pivot range.<br>
         <span style="color:{'#16a34a' if first_fact else '#404040'};">(Close={curr_open:.2f}; CPR: BC={next_bc:.2f} TC={next_tc:.2f})</span><br>
-        <b><u>Second</u></b>, the prior session's closing price should fall above the prior day's central pivot range.<br>
+        <b><u>Second</u></b>, the prior {data_freq[:-2].lower()}'s closing price should fall above the prior {data_freq[:-2].lower()}'s central pivot range.<br>
         <span style="font-size:24px; color:{'#16a34a' if third_fact else '#404040'};">2nd condition satisfied: {"Yes" if third_fact else "No"}</span><br><br>
         If both of these factors pass the test, the market is likely primed for another "buy the dip" opportunity (reverse for shorts).</b>
         """
@@ -494,7 +508,6 @@ else:
             <div style="font-size:17px;color:#404040;margin-top:7px;">
                 {bearish_comment if golden_pivot_sentiment == "Bearish (GPZ)" else ""}
                 {bullish_comment if golden_pivot_sentiment == "Bullish (GPZ)" else ""}
-
         
     """, unsafe_allow_html=True)
 
@@ -533,7 +546,7 @@ else:
     if is_within_tolerance(r2, next_R4, current_price_ref):
         dpz_messages.append(f"Classic R2 ({r2:.2f}) and Camarilla R4 ({next_R4:.2f}) are overlapping → Very Strong Resistance DPZ")
 
-    # 5) Classic Pivot with Camarilla R3/R4/R5-type (here use R3/R4 as per available)
+    # 5) Classic Pivot with Camarilla R3/R4
     if is_within_tolerance(pivot, next_R3, current_price_ref):
         dpz_messages.append(f"Classic Pivot ({pivot:.2f}) and Camarilla R3 ({next_R3:.2f}) are overlapping → Resistance DPZ")
     if is_within_tolerance(pivot, next_R4, current_price_ref):
@@ -559,7 +572,6 @@ else:
         dpz_messages.append(f"Classic Pivot ({pivot:.2f}) and Camarilla S4 ({next_S4:.2f}) are overlapping → Strong Support DPZ")
 
     if dpz_messages:
-        # classify overall bias for colour (if any resistance match, call it resistance biased etc.)
         has_res = any("Resistance" in m for m in dpz_messages)
         has_sup = any("Support" in m for m in dpz_messages)
         if has_res and has_sup:
@@ -596,8 +608,3 @@ else:
                 🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
             </div>
         """, unsafe_allow_html=True)
-
-
-
-
-
