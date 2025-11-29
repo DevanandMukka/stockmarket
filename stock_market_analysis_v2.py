@@ -584,12 +584,10 @@ else:
                 <div style="font-size:20px;color:{dpz_color};margin-bottom:8px;">
                     {dpz_type}
                 </div>
-                
                 <div style="font-size:17px;color:#111827;text-align:left;display:inline-block;">
                     {dpz_html_lines}
                 </div>
-                
-            
+            </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
@@ -598,5 +596,6 @@ else:
                 🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
             </div>
         """, unsafe_allow_html=True)
+
 
 
