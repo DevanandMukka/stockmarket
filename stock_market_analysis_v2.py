@@ -25,8 +25,6 @@ with col2:
         horizontal=True
     )
 
-
-
 # --- File uploader ---
 uploaded_file = st.file_uploader("Upload Excel File with Data (Date, High, Low, Close)", type=["xlsx", "xls"])
 
@@ -496,10 +494,118 @@ else:
             <div style="font-size:17px;color:#404040;margin-top:7px;">
                 {bearish_comment if golden_pivot_sentiment == "Bearish (GPZ)" else ""}
                 {bullish_comment if golden_pivot_sentiment == "Bullish (GPZ)" else ""}
-            
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
+    # ==========================================================
+    # === DOUBLE PIVOT HOT ZONE (DPZ) ===
+    # Using CPR (classic pivot) & Camarilla levels already computed above
 
+    # tolerance as % of price (can tweak, e.g. 0.001 = 0.1%)
+    tolerance_pct = 0.001
 
+    # helper to check if two levels are within tolerance
+    def is_within_tolerance(a, b, ref_price):
+        if ref_price == 0:
+            return False
+        return abs(a - b) <= ref_price * tolerance_pct
 
+    current_price_ref = last_day_data["Close"]
 
+    dpz_messages = []
+    dpz_type = "None"
+
+    # --- Resistance DPZ: Classic vs Camarilla ---
+    # 1) Classic R1 with Camarilla R3
+    if is_within_tolerance(r1, next_R3, current_price_ref):
+        dpz_messages.append(f"Classic R1 ({r1:.2f}) and Camarilla R3 ({next_R3:.2f}) are overlapping → Resistance DPZ")
+
+    # 2) Classic R1 with Camarilla R4
+    if is_within_tolerance(r1, next_R4, current_price_ref):
+        dpz_messages.append(f"Classic R1 ({r1:.2f}) and Camarilla R4 ({next_R4:.2f}) are overlapping → Strong Resistance DPZ")
+
+    # 3) Classic R2 with Camarilla R3
+    if is_within_tolerance(r2, next_R3, current_price_ref):
+        dpz_messages.append(f"Classic R2 ({r2:.2f}) and Camarilla R3 ({next_R3:.2f}) are overlapping → Resistance DPZ")
+
+    # 4) Classic R2 with Camarilla R4
+    if is_within_tolerance(r2, next_R4, current_price_ref):
+        dpz_messages.append(f"Classic R2 ({r2:.2f}) and Camarilla R4 ({next_R4:.2f}) are overlapping → Very Strong Resistance DPZ")
+
+    # 5) Classic Pivot with Camarilla R3/R4/R5-type (here use R3/R4 as per available)
+    if is_within_tolerance(pivot, next_R3, current_price_ref):
+        dpz_messages.append(f"Classic Pivot ({pivot:.2f}) and Camarilla R3 ({next_R3:.2f}) are overlapping → Resistance DPZ")
+    if is_within_tolerance(pivot, next_R4, current_price_ref):
+        dpz_messages.append(f"Classic Pivot ({pivot:.2f}) and Camarilla R4 ({next_R4:.2f}) are overlapping → Very Strong Resistance DPZ")
+
+    # --- Support DPZ: Classic vs Camarilla ---
+    # 6) Classic S1 with Camarilla S3/S4
+    if is_within_tolerance(s1, next_S3, current_price_ref):
+        dpz_messages.append(f"Classic S1 ({s1:.2f}) and Camarilla S3 ({next_S3:.2f}) are overlapping → Support DPZ")
+    if is_within_tolerance(s1, next_S4, current_price_ref):
+        dpz_messages.append(f"Classic S1 ({s1:.2f}) and Camarilla S4 ({next_S4:.2f}) are overlapping → Strong Support DPZ")
+
+    # 7) Classic S2 with Camarilla S3/S4
+    if is_within_tolerance(s2, next_S3, current_price_ref):
+        dpz_messages.append(f"Classic S2 ({s2:.2f}) and Camarilla S3 ({next_S3:.2f}) are overlapping → Support DPZ")
+    if is_within_tolerance(s2, next_S4, current_price_ref):
+        dpz_messages.append(f"Classic S2 ({s2:.2f}) and Camarilla S4 ({next_S4:.2f}) are overlapping → Very Strong Support DPZ")
+
+    # 8) Classic Pivot with Camarilla S3/S4
+    if is_within_tolerance(pivot, next_S3, current_price_ref):
+        dpz_messages.append(f"Classic Pivot ({pivot:.2f}) and Camarilla S3 ({next_S3:.2f}) are overlapping → Support DPZ")
+    if is_within_tolerance(pivot, next_S4, current_price_ref):
+        dpz_messages.append(f"Classic Pivot ({pivot:.2f}) and Camarilla S4 ({next_S4:.2f}) are overlapping → Strong Support DPZ")
+
+    if dpz_messages:
+        # classify overall bias for colour (if any resistance match, call it resistance biased etc.)
+        has_res = any("Resistance" in m for m in dpz_messages)
+        has_sup = any("Support" in m for m in dpz_messages)
+        if has_res and has_sup:
+            dpz_type = "Mixed (Support & Resistance DPZ)"
+            dpz_color = "#9333ea"
+        elif has_res:
+            dpz_type = "Resistance Double Pivot Hot Zone"
+            dpz_color = "#dc2626"
+        else:
+            dpz_type = "Support Double Pivot Hot Zone"
+            dpz_color = "#16a34a"
+
+        dpz_html_lines = "<br>".join(dpz_messages)
+
+        st.markdown(f"""
+            <div style="text-align:center;font-size:22px;font-weight:bold;
+                background:linear-gradient(145deg,#fef3c7,#ffffff);padding:22px;border-radius:15px;
+                box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #fbbf24;">
+                <div style="font-size:26px;color:#b45309;margin-bottom:10px;text-transform:uppercase;">
+                    🔥 Double Pivot Hot Zone (DPZ)
+                </div>
+                <div style="font-size:20px;color:{dpz_color};margin-bottom:8px;">
+                    {dpz_type}
+                </div>
+                <div style="font-size:16px;color:#374151;margin-bottom:10px;">
+                    A Double Pivot Hot Zone is formed when a classic pivot level and a Camarilla level align
+                    within a small tolerance (e.g., 0.1% of price), creating a powerful confluence zone that often
+                    acts as a high-probability support or resistance area.
+                </div>
+                <div style="font-size:17px;color:#111827;text-align:left;display:inline-block;">
+                    {dpz_html_lines}
+                </div>
+                <div style="font-size:14px;color:#4b5563;margin-top:10px;text-align:left;display:inline-block;">
+                    <b>What to watch for confirmation:</b><br>
+                    • Reversal candlestick patterns (e.g., pin bars, engulfing) near the DPZ.<br>
+                    • Volume spike or clear shift in buying/selling pressure around the zone.<br>
+                    • Momentum divergence or overbought/oversold readings to support reversal bias.<br><br>
+                    Use these DPZ overlaps as key zones to tighten stops, look for reversal setups, or avoid fresh
+                    entries directly into the zone without a clear breakout confirmation.
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+            <div style="text-align:center;font-size:20px;font-weight:bold;
+                background:#f9fafb;padding:18px;border-radius:12px;border:1px dashed #d1d5db;margin-top:20px;">
+                🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
+            </div>
+        """, unsafe_allow_html=True)
