@@ -494,7 +494,7 @@ else:
             <div style="font-size:17px;color:#404040;margin-top:7px;">
                 {bearish_comment if golden_pivot_sentiment == "Bearish (GPZ)" else ""}
                 {bullish_comment if golden_pivot_sentiment == "Bullish (GPZ)" else ""}
-            </div>
+
         
     """, unsafe_allow_html=True)
 
@@ -596,6 +596,7 @@ else:
                 🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
             </div>
         """, unsafe_allow_html=True)
+
 
 
 
