@@ -584,22 +584,11 @@ else:
                 <div style="font-size:20px;color:{dpz_color};margin-bottom:8px;">
                     {dpz_type}
                 </div>
-                <div style="font-size:16px;color:#374151;margin-bottom:10px;">
-                    A Double Pivot Hot Zone is formed when a classic pivot level and a Camarilla level align
-                    within a small tolerance (e.g., 0.1% of price), creating a powerful confluence zone that often
-                    acts as a high-probability support or resistance area.
-                </div>
+                
                 <div style="font-size:17px;color:#111827;text-align:left;display:inline-block;">
                     {dpz_html_lines}
                 </div>
-                <div style="font-size:14px;color:#4b5563;margin-top:10px;text-align:left;display:inline-block;">
-                    <b>What to watch for confirmation:</b><br>
-                    • Reversal candlestick patterns (e.g., pin bars, engulfing) near the DPZ.<br>
-                    • Volume spike or clear shift in buying/selling pressure around the zone.<br>
-                    • Momentum divergence or overbought/oversold readings to support reversal bias.<br><br>
-                    Use these DPZ overlaps as key zones to tighten stops, look for reversal setups, or avoid fresh
-                    entries directly into the zone without a clear breakout confirmation.
-                </div>
+                
             </div>
         """, unsafe_allow_html=True)
     else:
@@ -609,3 +598,4 @@ else:
                 🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
             </div>
         """, unsafe_allow_html=True)
+
