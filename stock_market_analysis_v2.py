@@ -183,7 +183,7 @@ else:
             condition_text = f"Next {data_freq[:-2]} TC ({curr_tc:.2f}) < Current {data_freq[:-2]} BC ({prev_bc:.2f})"
         elif curr_tc > prev_bc and curr_tc < prev_tc:
             relationship, sentiment = "Overlapping Lower Value Relationship", "Moderately Bearish"
-            condition_text = f"Next {data_freq[:-2]} BC ({curr_bc:.2f}) < Current {data_freq[:-2]} BC ({prev_bc:.2f}) and TC > Current {data_freq[:-2]} BC"
+            condition_text = f"Next Day BC ({curr_bc:.2f}) < Current Day BC ({prev_bc:.2f}) and TC > Current Day BC"
         elif abs(curr_tc - prev_tc) < 0.05 and abs(curr_bc - prev_bc) < 0.05:
             relationship, sentiment = "Unchanged Value Relationship", "Sideways/Breakout"
             condition_text = f"Next and Current {data_freq.lower()} CPRs nearly equal"
@@ -608,5 +608,6 @@ else:
                 🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
             </div>
         """, unsafe_allow_html=True)
+
 
 
