@@ -468,7 +468,7 @@ else:
         golden_pivot_cond = "BC ≤ S3 ≤ TC"
         golden_pivot_comment = f"(BC ≤ S3 ≤ TC)<br>BC = {next_bc:.2f}, S3 = {next_S3:.2f}, TC = {next_tc:.2f}"
     
-        first_fact = curr_open > next_bc or curr_open > next_tc
+        first_fact = curr_open > next_bc and curr_open > next_tc
         second_fact = prev_close > prev_bc and prev_close > prev_tc
         third_fact = next_tc < curr_close
     
@@ -608,6 +608,7 @@ else:
                 🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
             </div>
         """, unsafe_allow_html=True)
+
 
 
 
