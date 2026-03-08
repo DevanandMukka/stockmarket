@@ -450,9 +450,9 @@ else:
         golden_pivot_cond = "TC ≥ R3 ≥ BC"
         golden_pivot_comment = f"(TC ≥ R3 ≥ BC)<br>TC = {next_tc:.2f}, R3 = {next_R3:.2f}, BC = {next_bc:.2f}"
     
-        first_fact = curr_open < curr_bc or curr_open < curr_tc
-        second_fact = curr_close < curr_bc and curr_close < curr_tc
-        third_fact = curr_bc > curr_close
+        first_fact = curr_open < prev_bc or curr_open < prev_tc
+        second_fact = curr_open < prev_bc and curr_close < prev_tc
+        third_fact = curr_bc > prev_close
     
         bearish_comment = f"""
         <b>However, there are a couple of factors that must be in place in order for a "Sell the rip" opportunity to exist.<br>
@@ -470,7 +470,7 @@ else:
     
         first_fact = curr_open > next_bc or curr_open > next_tc
         # second_fact = prev_close > prev_bc and prev_close > prev_tc
-        second_fact = curr_close > curr_bc and curr_close > curr_tc #Updated this logic on Feb 3rd to see the correct
+        second_fact = curr_open > prev_bc and curr_open > prev_tc #Updated this logic on Feb 3rd to see the correct
         third_fact = next_tc < curr_close
     
         bullish_comment = f"""
@@ -609,6 +609,7 @@ else:
                 🔍 No Double Pivot Hot Zone (DPZ) detected for the next session within the current tolerance ({tolerance_pct*100:.2f}% of price).
             </div>
         """, unsafe_allow_html=True)
+
 
 
 
