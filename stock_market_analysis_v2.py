@@ -21,7 +21,7 @@ with col1:
 with col2:
     data_freq = st.radio(
         "Select Data Frequency:",
-        ["Daily", "Weekly", "Monthly","Yearly"],
+        ["Daily", "Weekly", "Monthly"],
         horizontal=True
     )
 
@@ -71,41 +71,25 @@ else:
         st.warning("Need at least 2 trading days in the file.")
         st.stop()
 
-  # ==========================================================
-# --- Resample for Weekly / Monthly / Yearly ---
-if data_freq == "Weekly":
-
-    # Resample to Friday for week ending OHLC
-    df = (df.set_index("Date")
-            .resample('W-FRI')
-            .agg({'High':'max', 'Low':'min', 'Close':'last'})
-            .reset_index())
-
-    df["NextDate"] = df["Date"] + pd.offsets.Week(weekday=0)  # Next Monday
-
-elif data_freq == "Monthly":
-
-    # Resample to month end for monthly OHLC
-    df = (df.set_index("Date")
-            .resample('M')
-            .agg({'High':'max', 'Low':'min', 'Close':'last'})
-            .reset_index())
-
-    df["NextDate"] = df["Date"] + pd.offsets.MonthBegin(1)
-
-elif data_freq == "Yearly":
-
-    # Resample to year end for yearly OHLC
-    df = (df.set_index("Date")
-            .resample('Y')
-            .agg({'High':'max', 'Low':'min', 'Close':'last'})
-            .reset_index())
-
-    df["NextDate"] = df["Date"] + pd.offsets.YearBegin(1)
-
-else:
-    # Daily calculation
-    df["NextDate"] = df["Date"] + timedelta(days=1)
+    # ==========================================================
+    # --- Resample for Weekly / Monthly ---
+    if data_freq == "Weekly":
+        # Resample to Friday for week ending OHLC
+        df = (df.set_index("Date")
+                .resample('W-FRI')
+                .agg({'High':'max', 'Low':'min', 'Close':'last'})
+                .reset_index())
+        df["NextDate"] = df["Date"] + pd.offsets.Week(weekday=0)  # Next Monday
+    elif data_freq == "Monthly":
+        # Resample to month end for monthly OHLC
+        df = (df.set_index("Date")
+                .resample('M')
+                .agg({'High':'max', 'Low':'min', 'Close':'last'})
+                .reset_index())
+        df["NextDate"] = df["Date"] + pd.offsets.MonthBegin(1)   # First day next month
+    else:
+        # Daily calculation — untouched
+        df["NextDate"] = df["Date"] + timedelta(days=1)
 
     # ==========================================================
     # --- CPR CALCULATION ---
