@@ -619,7 +619,7 @@ st.markdown(f"""
                 background:linear-gradient(145deg,#fef3c7,#ffffff);padding:22px;border-radius:15px;
                 box-shadow:0px 4px 8px rgba(0,0,0,0.08);margin-top:25px;border:1px solid #fbbf24;">
                 <div style="font-size:26px;color:#b45309;margin-bottom:10px;text-transform:uppercase;">
-                "🧭 Multi Timeframe DPZ Confluence (Daily vs Weekly vs Monthly)")
+                🧭 Multi Timeframe DPZ Confluence (Daily vs Weekly vs Monthly)>/div> """, unsafe_allow_html=True))
 # st.subheader("🧭 Multi Timeframe DPZ Confluence (Daily vs Weekly vs Monthly)")
 
 df_mtf = pd.read_excel(uploaded_file)
