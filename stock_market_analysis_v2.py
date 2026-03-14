@@ -21,7 +21,7 @@ with col1:
 with col2:
     data_freq = st.radio(
         "Select Data Frequency:",
-        ["Daily", "Weekly", "Monthly"],
+        ["Daily", "Weekly", "Monthly","Yearly"],
         horizontal=True
     )
 
@@ -87,6 +87,14 @@ else:
                 .agg({'High':'max', 'Low':'min', 'Close':'last'})
                 .reset_index())
         df["NextDate"] = df["Date"] + pd.offsets.MonthBegin(1)   # First day next month
+
+    elif data_freq == "Yearly":
+        df = (df.set_index("Date")
+              .resample('Y')
+              .agg({'High':'max', 'Low':'min', 'Close':'last'})
+              .reset_index())
+        df["NextDate"] = df["Date"] + pd.offsets.YearBegin(1) #First day of next year
+    
     else:
         # Daily calculation — untouched
         df["NextDate"] = df["Date"] + timedelta(days=1)
