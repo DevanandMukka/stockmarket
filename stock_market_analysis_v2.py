@@ -21,23 +21,31 @@ with col1:
 with col2:
     data_freq = st.radio(
         "Select Data Frequency:",
-        ["Daily", "Weekly", "Monthly"],
+        ["Daily", "Weekly", "Monthly","Yearly"],
         horizontal=True
     )
 
+# label to use everywhere instead of hardcoded "Day"
 # label to use everywhere instead of hardcoded "Day"
 if data_freq == "Daily":
     next_period_label = "next trading day"
     current_period_label = "Current Trading Day"
     prev_period_label = "Previous Trading Day"
+
 elif data_freq == "Weekly":
     next_period_label = "next trading week"
     current_period_label = "Current Trading Week"
     prev_period_label = "Previous Trading Week"
-else:
+
+elif data_freq == "Monthly":
     next_period_label = "next trading month"
     current_period_label = "Current Trading Month"
     prev_period_label = "Previous Trading Month"
+
+elif data_freq == "Yearly":
+    next_period_label = "next trading year"
+    current_period_label = "Current Trading Year"
+    prev_period_label = "Previous Trading Year"
 
 # --- File uploader ---
 uploaded_file = st.file_uploader("Upload Excel File with Data (Date, High, Low, Close)", type=["xlsx", "xls"])
@@ -63,25 +71,41 @@ else:
         st.warning("Need at least 2 trading days in the file.")
         st.stop()
 
-    # ==========================================================
-    # --- Resample for Weekly / Monthly ---
-    if data_freq == "Weekly":
-        # Resample to Friday for week ending OHLC
-        df = (df.set_index("Date")
-                .resample('W-FRI')
-                .agg({'High':'max', 'Low':'min', 'Close':'last'})
-                .reset_index())
-        df["NextDate"] = df["Date"] + pd.offsets.Week(weekday=0)  # Next Monday
-    elif data_freq == "Monthly":
-        # Resample to month end for monthly OHLC
-        df = (df.set_index("Date")
-                .resample('M')
-                .agg({'High':'max', 'Low':'min', 'Close':'last'})
-                .reset_index())
-        df["NextDate"] = df["Date"] + pd.offsets.MonthBegin(1)   # First day next month
-    else:
-        # Daily calculation — untouched
-        df["NextDate"] = df["Date"] + timedelta(days=1)
+  # ==========================================================
+# --- Resample for Weekly / Monthly / Yearly ---
+if data_freq == "Weekly":
+
+    # Resample to Friday for week ending OHLC
+    df = (df.set_index("Date")
+            .resample('W-FRI')
+            .agg({'High':'max', 'Low':'min', 'Close':'last'})
+            .reset_index())
+
+    df["NextDate"] = df["Date"] + pd.offsets.Week(weekday=0)  # Next Monday
+
+elif data_freq == "Monthly":
+
+    # Resample to month end for monthly OHLC
+    df = (df.set_index("Date")
+            .resample('M')
+            .agg({'High':'max', 'Low':'min', 'Close':'last'})
+            .reset_index())
+
+    df["NextDate"] = df["Date"] + pd.offsets.MonthBegin(1)
+
+elif data_freq == "Yearly":
+
+    # Resample to year end for yearly OHLC
+    df = (df.set_index("Date")
+            .resample('Y')
+            .agg({'High':'max', 'Low':'min', 'Close':'last'})
+            .reset_index())
+
+    df["NextDate"] = df["Date"] + pd.offsets.YearBegin(1)
+
+else:
+    # Daily calculation
+    df["NextDate"] = df["Date"] + timedelta(days=1)
 
     # ==========================================================
     # --- CPR CALCULATION ---
